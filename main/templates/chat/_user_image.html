@@ -1,0 +1,8 @@
+<div class="ui image label user-on-mobile">
+    {{ user.nickname }}
+    {% if leader == user.nickname %}
+        <i class="user secret icon"></i>
+    {% else %}
+        <i class="icon"></i>
+    {% endif %}
+</div>

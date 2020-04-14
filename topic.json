@@ -1,0 +1,29 @@
+{
+  "animal": ["lion", "rabbit", "dragon", "bird","dolphin",
+            "bear", "fish", "wolf", "raptor",
+            "duck", "pigeon", "rat", "ape",
+            "bat", "cockroach", "cat", "tiger", "dog",
+            "fox","koala","pig","zebra"
+  ],
+
+  "country": ["Brazil","Argentina","Turkey","United States",
+          "Germany","Sweden","France","Italy","China"
+  ],
+
+  "food": ["cupcake","hotdog","donut","taco","sushi","popcorn","pizza",
+            "orange","strawberry","apple","egg","banana","tomato","mushroom"
+  ],
+
+  "company": ["Facebook","Youtube","Google","Netflix",
+              "Instagram","Spotify","Twitter","eBay","Yelp","Whatsapp"
+  ],
+
+  "cartoons": ["Tom and Jerry","SpongeBob SquarePants",
+              "The Simpsons","Spiderman","Pokemon"
+  ],
+
+  "brands": ["Adidas","Nike","Puma","Reebok","Burberry",
+            "Mercedes-Benz","BMW","Porsche","Audi","Lacoste","Chanel",
+            "Red Bull","Maserati","Air Jordan","Apple","Razer","Microsoft"
+  ]
+}

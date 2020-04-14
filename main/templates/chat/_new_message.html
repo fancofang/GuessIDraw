@@ -1,0 +1,11 @@
+<div class="msg-box">
+    <div class="picture">
+        <img class="pop-card" data-position="right center" data-offset="-40"
+             src="{{ avatar }}">
+    </div>
+    <div class="msg">
+        <span class="nickname">{{ nickname }}</span>
+        <small class="timestamp">{{ moment(time).format('lll') }}</small>
+        <span class="message-body">{{ message|safe }}</span>
+    </div>
+</div>

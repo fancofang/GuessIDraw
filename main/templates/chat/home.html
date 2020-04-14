@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Index{% endblock %}
+
+{% block room %}{{ room_name }}{% endblock %}
+{% block name %}{{ user.nickname }}{% endblock %}
+
+{% block canvas %}
+    <div class="canvas-container">
+    {% if leader == user.nickname %}
+        <div id="canvas-tool">
+            <div class="ui toggle icon button canvastool-pencil active" id="canvastool-pencil">
+                <i class="pencil alternate icon"></i>
+                <div class="pencil-menu invisible">
+                    <div class="range-wrap">
+                        <input type="range" id="pencil-range" class="slider" min="1" max="30" value="5">
+                    </div>
+                    <div id="color-group">
+                        <ul>
+                            <li id="white" class="color-item" style="background-color: white;"></li>
+                            <li id="black" class="color-item active" style="background-color: black;"></li>
+                            <li id="red" class="color-item" style="background-color: #FF3333;"></li>
+                            <li id="blue" class="color-item" style="background-color: #0066FF;"></li>
+                            <li id="yellow" class="color-item" style="background-color: #FFFF33;"></li>
+                            <li id="green" class="color-item" style="background-color: #33CC66;"></li>
+                            <li id="gray" class="color-item" style="background-color: gray;"></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="ui toggle icon button canvastool-eraser" id="canvastool-eraser">
+                <i class="eraser icon"></i>
+                <div class="eraser-menu invisible">
+                    <div class="range-wrap">
+                        <input type="range" id="eraser-range" class="slider" min="1" max="60" value="30">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="question" class="ui card">
+            <div class="content">
+                <div class="header">Topic
+<!--                    <button class="ui icon mini button circular refresh">-->
+<!--                      <i class="redo icon"></i>-->
+<!--                    </button>-->
+                </div>
+                <div class="description"></div>
+            </div>
+        </div>
+        <div id="reSetCanvas" class="ui icon button canvastool-trash">
+            <i class="trash alternate icon"></i>
+        </div>
+    {% else %}
+        <div class="ui icon button toggle canvastool-answer active">
+            <i class="keyboard icon"></i>
+        </div>
+        <div id="answer" class="ui card">
+            <div class="content">
+                <div class="header">Answer:</div>
+                <div class="description"></div>
+                <i id="checkanswer" class="icon"></i>
+            </div>
+            <div class="ui input">
+                <input id="answer-textarea" type="text" placeholder="your answer...">
+            </div>
+        </div>
+    {% endif %}
+        <div class="ui icon button toggle canvastool-rank active">
+            <i class="trophy icon"></i>
+        </div>
+        <div id="rank" >
+            <div class="ui list flex-on-mobile">
+                    {% for user in users %}
+                        {% include "chat/_rank.html" %}
+                    {% endfor %}
+            </div>
+        </div>
+        <canvas id="myCanvas" class="quiz"></canvas>
+        <div id="countdown"></div>
+        <div id="snackbar">Someone answer is correct</div>
+    </div>
+{% endblock %}
+
+{% block messages %}
+<div class="messages">
+    <div class="ui text loader">Loading messages...</div>
+    {% include 'chat/_messages.html' %}
+</div>
+{% endblock %}
+
+{% block inputarea %}
+    {% if current_user.is_authenticated %}
+        <div class="twelve wide column">
+            <div class="input-area">
+                <img class="pop-card input-avatar" data-position="bottom left" src="{{ current_user.gravatar }}">
+                <textarea rows="2" id="message-textarea" placeholder="Write your message here... Enter to send"></textarea>
+            </div>
+        </div>
+        <div class="four wide column">
+            {% if leader == user.nickname %}
+                <div  id="leaderprepare" class="ui buttons large">
+                    <button id="begin" class="ui button orange inputarea-button">Begin</button>
+                </div>
+            {% else %}
+                <div  id="guestprepare" class="ui buttons large">
+                    <button id="ready" class="ui button inputarea-button">Ready</button>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="ui floating message">Please <a href="{{ url_for('auth.login') }}">Sign in</a> or
+            <a href="{{ url_for('auth.register') }}">Sign up</a> to send message.
+        </div>
+    {% endif %}
+{% endblock %}

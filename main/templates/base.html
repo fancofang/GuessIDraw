@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %} - Guess What I Draw</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+</head>
+<body>
+
+    <div class="ui labeled icon right vertical inverted menu sidebar">
+        <a class="item" href="{{ url_for('auth.logout') }}">
+            <i class="power off icon"></i>Sign out
+        </a>
+    </div>
+
+    <div class="pusher">
+        <div id="container" class="ui grid">
+            <div class="row navigation">
+                <div class="column">
+                    <div class="ui top fixed borderless menu navigation-bar">
+                        <div class="ui large buttons">
+                            <button class="ui button teal quit change-on-mobile">QUIT</button>
+                        </div>
+                        <div class="item change-on-mobile">
+                            <div class="ui label black basic change-on-mobile" id="user-online">
+                                <i class="user icon"></i>
+                                    {% include 'chat/_user_images.html' %}
+                            </div>
+                        </div>
+                        <div class="right menu hide-on-mobile">
+                            <div class="item">
+                                <button class="ui button orange basic">Room: {% block room %}{% endblock %}</button>
+                            </div>
+                            <a class="item" id="toggle-sidebar">
+                                <i class="sidebar icon"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="canvas" class="row">
+                <div class="column">
+                    {% block canvas %}{% endblock %}
+                </div>
+            </div>
+
+
+            <div id="messages" class="row" >
+                <div class="column">
+                    {% block messages %}{% endblock %}
+                </div>
+            </div>
+
+
+            <div id="input-area" class="row">
+                {% block inputarea %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+{% block script %}
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+    <script src="{{ url_for('static', filename='js/canvas.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/additional_socket.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.knob.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.throttle.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.classycountdown.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
+    <script type="text/javascript">
+        var csrf_token = "{{ csrf_token() }}";
+        var messages_url = "{{ url_for('chat.get_messages') }}";
+        var current_user_id = {{ current_user.id|default(0) }};
+        var current_user_name = "{{ current_user.nickname|default(0) }}";
+        var leave_url = "{{ url_for('chat.leave_room') }}";
+        var check_answer_url = "{{ url_for('chat.check_answer') }}";
+        var return_topic = "{{ url_for('chat.get_topic') }}";
+        var leader_url = "{{ url_for('chat.changeleader') }}";
+        var clean_topic_url = "{{ url_for('chat.clean_topic') }}";
+        var drawer = "{{ leader|safe }}";
+    </script>
+{% endblock %}
+</body>
+</html>

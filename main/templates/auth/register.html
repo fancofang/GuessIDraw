@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign Up - British Quiz</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='Semantic-UI-CSS-master/semantic.min.css') }}">
+    <style>
+        body > .grid {
+            height: 100%;
+        }
+        .column {
+            max-width: 450px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui middle aligned center aligned grid">
+        <div class="column">
+            <h2 class="ui blue image header">
+                  <div class="content">
+                    Sign up your account
+                  </div>
+            </h2>
+            <form method="post" action="{{ url_for('auth.register') }}" class="register ui form attached left aligned fluid segment">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="field">
+                {{ form.nickname.label }}{{ form.nickname }}
+                </div>
+                <div class="field">
+                {{ form.email.label }}{{ form.email }}
+                </div>
+                <div class="field">
+                {{ form.password1.label }}{{ form.password1 }}
+                </div>
+                <div class="field">
+                {{ form.password2.label }}{{ form.password2 }}
+                </div>
+                {{ form.submit }}
+            </form>
+
+            <div class="ui message">
+                Already have account? <a href="{{ url_for('chat.index') }}">Log in</a>
+            </div>
+
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='Semantic-UI-CSS-master/semantic.min.js') }}"></script>
+</body>
+</html>
