@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, url_for, request, flash, render_template
+from flask import Blueprint, redirect, url_for, request, flash, render_template, session
 from flask_login import current_user, login_user, login_required, logout_user
 from main.models import User
 from main.extensions import db
@@ -30,8 +30,9 @@ def login():
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    session['id'] = current_user.id
     logout_user()
-    return redirect(url_for('chat.index'))
+    return redirect(url_for('chat.leave_room'))
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])

@@ -24,7 +24,6 @@ def new_message(message_body):
     gravatar = current_user.gravatar
     timestamp = datetime.utcnow()
     room = session.get('room')
-    print(message_body)
     emit(
         'new message',
         {
@@ -35,8 +34,6 @@ def new_message(message_body):
                                             time = timestamp
                                            ),
             'message_body':message_body,
-            # 'gravatar': current_user.gravatar,
-            # 'nickname': current_user.nickname,
             'user_id': current_user.id
             },
         room=room
@@ -63,10 +60,8 @@ def on_join(data):
 @socketio.on('leave')
 def on_leave(data):
     global online_users
-    print("leave")
     room = session.get('room')
     online_users[room].remove(current_user.nickname)
-    print('The peroson who still in room:',online_users[room])
     emit('confirmleave',
          {
              'message': current_user.nickname + ' has left the room',
@@ -109,11 +104,9 @@ def cancel(data):
 @socketio.on('renew')
 def changeleader(data):
     room = session.get('room')
-    print("data is :",data)
     if data['person'] == None:
         pass
     else:
-        print("In the socket the room leader is: %s"% data['person'])
         emit('changeleader',
             {
                 'message': "amazing",
@@ -132,5 +125,4 @@ def updatescore(data):
 @socketio.on('inform')
 def inform(data):
     room = session.get('room')
-    print(data)
     emit('inform',data,room=room, include_self=False)

@@ -37,13 +37,11 @@ $(document).ready(function () {
                     $(data).prependTo(".messages").hide().fadeIn(800);
                     var after_height = $messages[0].scrollHeight;
                     flask_moment_render_all();
-                    console.log("before_height",before_height,"after_height",after_height);
                     $messages.scrollTop(after_height - before_height);
                     $('.ui.loader').toggleClass('active');
                     activateSemantics();
                 },
                 error: function () {
-                    alert('No more messages.');
                     $('.ui.loader').toggleClass('active');
                 }
             });
@@ -55,7 +53,6 @@ $(document).ready(function () {
         var $textarea = $('#message-textarea');
         var message_body = $textarea.val().trim();
         if (e.which === ENTER_KEY && !e.shiftKey && message_body) {
-            console.log('send message');
             socket.emit('new message', message_body);
             $textarea.val('')
         }
@@ -126,7 +123,6 @@ $(document).ready(function () {
     //socket functions
     //receive server "leave room" event
     socket.on('confirmleave', function(data) {
-        console.log(data.message);
         online = document.getElementsByClassName('ui image label');
         for(var i=0;i<online.length;i++){
             name = online[i].innerText.replace(/^\s+|\s+$/g,"");
@@ -140,8 +136,8 @@ $(document).ready(function () {
                     url: leader_url,
                     type: 'GET',
                     success: function (person) {
-                        console.log(person);
                         socket.emit('renew',{person});
+                        socket.emit('inform',{message:data.message});
                         window.location.href = leave_url;
                     },
                     error: function () {
@@ -154,7 +150,7 @@ $(document).ready(function () {
 
      //receive server "join room" event
     socket.on('confirmjoin', function(data) {
-        console.log(data.message);
+        socket.emit('inform',{message:data.message});
         online = document.getElementsByClassName('ui image label');
         for(var i=0;i<online.length;i++){
             name = online[i].innerText.replace(/^\s+|\s+$/g,"");
@@ -217,7 +213,6 @@ $(document).ready(function () {
 
     // receive server "update score" event
     socket.on('updatescore', function(data) {
-        console.log(data);
         online = document.getElementsByClassName('rank-item');
         for(var i=0;i<online.length;i++){
             header = online[i].getElementsByClassName("content")[0].getElementsByClassName("header")[0]
@@ -239,10 +234,7 @@ $(document).ready(function () {
         online = document.getElementsByClassName('ui image label');
         for(var i=0;i<online.length;i++){
             name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-            console.log("data.leader",data.leader);
-            console.log("the name",name);
             if (data.leader == name) {
-                console.log(online[i].getElementsByTagName('i')[0]);
                 online[i].getElementsByTagName('i')[0].setAttribute("class","user secret icon");
             }
         };
@@ -283,7 +275,6 @@ $(document).ready(function () {
 
     // receive server "new message" event
     socket.on('new message', function (data) {
-        console.log('receive message')
         message_count++;
         // if browser not in focus
         if (!document.hasFocus()) {
@@ -357,7 +348,7 @@ $(document).ready(function () {
             }});
         }
         else {
-            console.log("someone is not ready!");
+            inform("someone is not ready!");
         }
     });
 
@@ -365,11 +356,9 @@ $(document).ready(function () {
     $('#ready').on('click', function(){
         $('#ready').toggleClass('ready');
         if($('#ready').hasClass('ready')){
-            console.log("准备中");
             socket.emit('ready',{status:'ready'});
         }
         else{
-            console.log("取消准备");
             socket.emit('cancel',{status:'cancel'});
         }
     });
