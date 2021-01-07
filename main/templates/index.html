@@ -1,130 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Guess What I Draw</title>
-    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body >
-{% for message in get_flashed_messages(with_categories=True) %}
-    <div class="ui warning message alert">
-      <i class="close icon"></i>
-        {{ message[1] }}
-    </div>
-{% endfor %}
+    <!-- Standard Meta -->
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
-{% if current_user.is_authenticated %}
-    <div class="bg-index index-contain">
-        <div class="ui center aligned basic segment">
-            <div>
-                <h1 class="header show-on-mobile">Hi {{ current_user.nickname }}</h1>
-            </div>
-            <div class="ui card hide-on-mobile">
-                <a class="image" href="#">
-                    <img src="{{ current_user.gravatar }}">
-                </a>
-                <div class="content">
-                    <p class="header" id="welcome_name">{{ current_user.nickname }}</p>
+    <!-- Site Properties -->
+    <title>Guess What I Draw</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+
+</head>
+<body>
+
+
+<!-- Following Menu -->
+<div class="ui large top fixed hidden menu">
+    <div class="ui container">
+        <a class="active item">Home</a>
+        <a class="item">How to play</a>
+        <a class="item">Get started</a>
+        <div class="right menu">
+            {% if current_user.is_authenticated %}
+            <div class="item">
+                <div class="ui button dropdown">
+                    {{ current_user.nickname }}
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <a href="{{ url_for('auth.logout') }}" class="item">Log out</a>
+                    </div>
                 </div>
             </div>
-            <form class="room ui form left icon input" method="POST" action="{{ url_for('chat.search_room') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="ui left icon input">
-                            <input type="text" name="room" placeholder="Room name...">
-                            <i class="search icon"></i>
-                        </div>
-                    <div id="join-room" class="ui blue submit button">Join</div>
-                </form>
-
-          <div class="ui horizontal divider">
-            Or
-          </div>
-          <div class="ui teal labeled icon button" id="show-create-room-modal">
-            Create New Room
-            <i class="add icon"></i>
-          </div>
-        </div>
-    </div>
-
-{% else %}
-    <div class="bg-index index-contain">
-            <h1>Guess What I Draw ?</h1>
-    </div>
-    <div class="ui placeholder segment index-margin">
-        <div class="ui two column very relaxed stackable grid">
-            <div class="column">
-                <form class="login ui form" method="POST" action="{{ url_for('auth.login') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="field">
-                        <label>Email</label>
-                        <div class="ui left icon input">
-                            <input type="text" name="email" placeholder="abc@hotmail.com">
-                            <i class="user icon"></i>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Password</label>
-                        <div class="ui left icon input">
-                            <input type="password" name="password">
-                            <i class="lock icon"></i>
-                        </div>
-                    </div>
-                    <div class="ui fluid large blue submit button">Login</div>
-                    <div class="ui error message"></div>
-                </form>
+            {% else %}
+            <div class="item">
+                <a href="{{ url_for('auth.login') }}" class="ui button">Log in</a>
             </div>
-        <div class="middle aligned column">
-            <div class="ui big button">
-                <a href="{{ url_for('auth.register') }}">
-                    <i class="signup icon"></i>Sign Up
-                </a>
+            <div class="item">
+                <a href="{{ url_for('auth.register') }}" class="ui primary button">Sign Up</a>
             </div>
+            {% endif %}
         </div>
-      </div>
-      <div class="ui vertical divider">
-          <p class="vertical hidden">Or</p>
-      </div>
-</div>
-{% endif %}
-
-
-<!-- create room Modal -->
-<div class="ui modal room">
-    <div class="header">Create room name</div>
-    <div class="content">
-        <div class="ui form">
-            <div class="ui input">
-                <input type="text" id="create-room-textarea" placeholder="Room name...">
-            </div>
-        </div>
-    </div>
-    <div class="actions">
-        <button class="ui button cancel">Cancel</button>
-        <button class="ui button blue approve" id="create-room-button">Create</button>
     </div>
 </div>
 
-
-
-
-{% block script %}
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-    <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    {{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
+<!-- Sidebar Menu -->
+<div class="ui vertical inverted sidebar menu">
+    <a class="active item">Home</a>
+    <a class="item">How to play</a>
+    <a class="item">Get started</a>
     {% if current_user.is_authenticated %}
-        <script type="text/javascript">
-            var csrf_token = "{{ csrf_token() }}";
-            var create_room_url = "{{ url_for('chat.create_room') }}"
-            var current_user_id = {{ current_user.id|default(0) }};
-            var join_url = "{{ url_for('chat.room')}}"
-        </script>
+    <a href="{{ url_for('auth.logout') }}" class="item">Log out</a>
     {% else %}
+    <a href="{{ url_for('auth.login') }}" class="item">Log in</a>
+    <a href="{{ url_for('auth.register') }}" class="item">Sign up</a>
     {% endif %}
-{% endblock %}
+
+</div>
+
+
+<!-- Page Contents -->
+<div class="pusher">
+    <div class="ui vertical masthead center aligned segment landing-image">
+        <div class="ui container">
+            <div class="ui large secondary inverted menu">
+                <a class="toc item">
+                    <i class="sidebar icon"></i>
+                </a>
+                <a class=" header active item">Home</a>
+                <a class="header item">How to play</a>
+                <a class="header item">Get started</a>
+                <div class="right menu">
+                    {% if current_user.is_authenticated %}
+                    <div class="item">
+                        <div class="ui button dropdown">
+                            {{ current_user.nickname }}
+                            <i class="dropdown icon"></i>
+                            <div class="menu">
+                                <a href="{{ url_for('auth.logout') }}" class="item">Log out</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="item">
+                        <a href="{{ url_for('auth.login') }}" class="ui button">Log in</a>
+                    </div>
+                    <div class="item">
+                        <a href="{{ url_for('auth.register') }}" class="ui primary button">Sign Up</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="ui text container intro">
+            <h1 class="ui header inverted">
+                Guess What I Draw ?
+            </h1>
+            <h2 class="ui inverted">Enjoy your drawing and guessing time with your friend.</h2>
+            <p>* No Drawing Skill Required</p>
+            <a href="{{ url_for('chat.index') }}" class="ui huge primary button">Get Started <i class="right arrow icon"></i></a>
+        </div>
+
+    </div>
+
+    <!--  <div class="ui vertical stripe segment">-->
+    <!--    <div class="ui middle aligned stackable grid container">-->
+    <!--      <div class="row">-->
+    <!--        <div class="eight wide column">-->
+    <!--          <h3 class="ui header">We Help Companies and Companions</h3>-->
+    <!--          <p>We can give your company superpowers to do things that they never thought possible. Let us delight your customers and empower your needs...through pure data analytics.</p>-->
+    <!--          <h3 class="ui header">We Make Bananas That Can Dance</h3>-->
+    <!--          <p>Yes that's right, you thought it was the stuff of dreams, but even bananas can be bioengineered.</p>-->
+    <!--        </div>-->
+    <!--        <div class="six wide right floated column">-->
+    <!--          <img src="assets/images/wireframe/white-image.png" class="ui large bordered rounded image">-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--      <div class="row">-->
+    <!--        <div class="center aligned column">-->
+    <!--          <a class="ui huge button">Check Them Out</a>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--    </div>-->
+    <!--  </div>-->
+
+
+    <div class="ui vertical stripe quote segment">
+        <div class="ui equal width stackable internally celled grid">
+            <div class="right aligned row">
+                <div class="left floated column ui card">
+                    <div class="ui small rounded image right floated">
+                        <img src="{{ url_for('static', filename='images/painter.jpg') }}">
+                    </div>
+                    <h3 class="margin">Draw whatever you want from a given word.</h3>
+                    <h3 class="margin">Wiggle you finger to create a doodle masterpiece!</h3>
+                    <p>when you are the painter</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui vertical stripe quote segment">
+        <div class="ui equal width stackable internally celled grid">
+            <div class="left aligned row">
+                <div class="right floated column ui card">
+                    <div class="ui small rounded image left floated">
+                        <img src="{{ url_for('static', filename='images/guesser.jpg') }}">
+                    </div>
+                    <h3 class="margin">Even though you answer incorrect,</h3>
+                    <h3 class="margin">it's a good chance to saracasm your friend!</h3>
+                    <p>when you are the guesser</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="ui inverted vertical footer segment">
+        <div class="ui container">
+            <div class="ui stackable inverted divided equal height stackable grid">
+                <div class="three wide column">
+                    <h4 class="ui inverted header">About</h4>
+                    <div class="ui inverted link list">
+                        <a href="#" class="item">Report issue</a>
+                        <a href="#" class="item">Contact me</a>
+                        <a href="#" class="item">FAQ</a>
+                    </div>
+                </div>
+                <div class="three wide column">
+                    <h4 class="ui inverted header">&copy; 2021 Fanco</h4>
+                </div>
+                <div class="seven wide column">
+                    <h4 class="ui inverted header">If you like the project</h4>
+                    <p>please feel free give me a thumbup.</p>
+                    <a href="https://github.com/fancofang/GuessIDraw" class="item">github</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+<script>
+    $(document)
+        .ready(function () {
+            // fix menu when passed
+            $('.masthead')
+                .visibility({
+                    once: false,
+                    onBottomPassed: function () {
+                        $('.fixed.menu').transition('fade in');
+                    },
+                    onBottomPassedReverse: function () {
+                        $('.fixed.menu').transition('fade out');
+                    }
+                })
+            ;
+
+            $('.ui.dropdown')
+                .dropdown();
+
+            // create sidebar and attach to menu open
+            $('.ui.sidebar')
+                .sidebar('attach events', '.toc.item')
+            ;
+
+        })
+    ;
+</script>
+
+
 </body>
+
 </html>

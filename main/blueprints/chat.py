@@ -11,11 +11,11 @@ topic = {}
 
 @chat_bp.route('/')
 def index():
-    room_name = session.get('room')
-    room = Room.query.filter_by(name=room_name).first()
-    if room is not None:
-        return redirect(url_for('chat.join_room', rid=room.id))
-    session.pop(room_name, None)
+    # room_name = session.get('room')
+    # room = Room.query.filter_by(name=room_name).first()
+    # if room is not None:
+    #     return redirect(url_for('chat.join_room', rid=room.id))
+    # session.pop(room_name, None)
     return render_template('index.html')
 
 @chat_bp.route('/room')
@@ -137,3 +137,9 @@ def clean_topic():
     redis.srem('ongame', room)
     del topic[room]
     return ""
+
+
+
+@chat_bp.route('/test')
+def test_page():
+    return render_template('test.html')

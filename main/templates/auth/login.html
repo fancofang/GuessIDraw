@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sign Up</title>
+    <title>Log in</title>
     <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <style>
@@ -20,28 +20,25 @@
         <div class="column">
             <h2 class="ui blue image header">
                   <div class="content">
-                    Sign up your account
+                    Welcome back
                   </div>
             </h2>
-            <form method="post" action="{{ url_for('auth.register') }}" class="register ui form attached left aligned fluid segment">
+            <form method="post" action="{{ url_for('auth.login') }}" class="register ui form attached left aligned fluid segment">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="field">
-                {{ form.nickname.label }}{{ form.nickname }}
-                </div>
                 <div class="field">
                 {{ form.email.label }}{{ form.email }}
                 </div>
                 <div class="field">
-                {{ form.password1.label }}{{ form.password1 }}
+                {{ form.password.label }}{{ form.password }}
                 </div>
                 <div class="field">
-                {{ form.password2.label }}{{ form.password2 }}
+                {{ form.remember.label }}{{ form.remember }}
                 </div>
                 {{ form.submit }}
             </form>
 
             <div class="ui message">
-                Already have account? <a href="{{ url_for('auth.login') }}">Log in</a>
+                Don't have account? <a href="{{ url_for('auth.register') }}">register</a>
             </div>
 
         </div>

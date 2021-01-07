@@ -36,7 +36,7 @@ p.vertical.hidden {
 @media (max-width: 767px) {
     .ui.vertical.divider,p.vertical.hidden {
         display:none;
-    };
+    }
 }
 
 
@@ -451,7 +451,6 @@ p.vertical.hidden {
 
 
 @media screen and (max-width: 600px) {
-
 
     .index-margin {
         bottom: -25%;

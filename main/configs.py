@@ -11,11 +11,11 @@ else:
 
 class Baseconfig:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev key')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class DevelopmentConfig(Baseconfig):
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', prefix + os.path.join(basedir, 'data.db'))
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class ProductionConfig(Baseconfig):
