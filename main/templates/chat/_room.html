@@ -1,0 +1,9 @@
+<div class="item">
+    <div class="right floated content">
+        <a class="ui button" href="{{ url_for('chat.join_room', rn=room.name) }}">Join</a>
+    </div>
+    <img class="ui avatar image" src="{{ leaders[room.leader] }}">
+    <div class="content">
+        {{ room.leader }}
+    </div>
+</div>

@@ -1,7 +1,13 @@
+
+
+
+
 {% extends 'base.html' %}
 
-{% block title %} platform {% endblock %}
 
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
 
 {% block main%}
 
@@ -14,7 +20,7 @@
 
 
 <div class="pusher">
-<div class="ui segment no-border" id="example1">
+<div class="ui segment" id="example1">
 <div class="ui two column stackable grid container">
     <div class="column hide-on-mobile">
         <div class=" ui sticky m-top-1">
@@ -51,11 +57,11 @@
                 </div>
                 <div class="extra content">
       <span class="right floated">
-        Joined in 2021
+        Joined in 2013
       </span>
       <span>
         <i class="user icon"></i>
-        15 Friends
+        75 Friends
       </span>
     </div>
             </div>
@@ -143,6 +149,9 @@
 <!--                    </div>-->
                 </div>
             </div>
+            <p style="height: 5000px;">fda</p>
+
+
         </div>
     </div>
 

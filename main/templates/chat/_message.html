@@ -1,11 +1,10 @@
 <div class="msg-box">
-    <div class="picture">
-        <img class="pop-card" data-position="right center" data-offset="-40"
-             src="{{ message.user.gravatar }}">
+    <div class="msg-picture">
+        <img class="pop-card" data-position="right center" data-offset="-40" src="{{ message.user.gravatar }}">
     </div>
     <div class="msg">
-        <span class="nickname">{{ message.user.nickname }}</span>
-        <small class="timestamp">{{ moment(message.timestamp).format('lll') }}</small>
-        <span class="message-body">{{ message.body }}</span>
+        <span class="msg-nickname">{{ message.user.nickname }}</span>
+        <small class="msg-timestamp">{{ moment(message.timestamp).format('lll') }}</small>
+        <span class="msg-body">{{ message.body|safe }}</span>
     </div>
 </div>

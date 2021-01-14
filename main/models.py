@@ -1,8 +1,10 @@
 import hashlib
 from datetime import datetime
 from flask_login import UserMixin
+from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash, check_password_hash
 from main.extensions import db
+from sqlalchemy import event
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -14,6 +16,8 @@ class User(UserMixin, db.Model):
     email_hash = db.Column(db.String(128))
     messages = db.relationship('Message', backref='user')
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'))
+    register = db.Column(db.DateTime, default=datetime.utcnow())
+    lastroom = db.Column(db.String(128))
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -55,6 +59,14 @@ class Room(db.Model):
 
     def set_leader(self,name):
         self.leader = name
+        return self.leader
+
+    @validates('users')
+    def validate_users_size(self, key, target):
+        # print("validates:",self,key, target)
+        # print("The room's members:",self.users)
+        assert len(self.users) <= 5
+        return target
 
 
 class Word(db.Model):
@@ -64,3 +76,41 @@ class Word(db.Model):
     name = db.Column(db.String(30), unique=True, nullable=False)
 
 
+
+
+
+# @event.listens_for(Room, 'before_insert')
+# def receive_before_insert(mapper, connection, target):
+#     print('before_insert:',mapper, connection, target)
+#     print(target.users)
+#
+#
+# @event.listens_for(Room, 'before_update')
+# def receive_before_update(mapper, connection, target):
+#     "listen for the 'before_update' event"
+#     print('before_update:',mapper, connection, target)
+#
+#     print(target.users)
+#
+#
+#
+# @event.listens_for(Room.users, 'append',)
+# def receive_append2(target,value, initiator):
+#     print("房间增加用户：",target,value, initiator)
+
+# class ListRoomMerber(object):
+#     def __init__(self):
+#         self.data = []
+#     def append(self,item):
+#         if len(self.data) < 2:
+#             self.data.append(item)
+#         else:
+#             raise Exception("Out of space")
+#     def remove(self,item):
+#         self.data.remove(item)
+#
+#     def extend(self, items):
+#         self.data.extend(items)
+#
+#     def __iter__(self):
+#         return iter(self.data)

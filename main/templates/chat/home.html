@@ -1,11 +1,53 @@
-{% extends 'base.html' %}
-{% block title %}Index{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ room_name }} - Guess What I Draw</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+    <!--    <link rel="stylesheet" href="{{ url_for('static', filename='css/test.css') }}">-->
+</head>
+<body>
 
-{% block room %}{{ room_name }}{% endblock %}
-{% block name %}{{ user.nickname }}{% endblock %}
 
-{% block canvas %}
-    <div class="canvas-container">
+<div class="pusher">
+    <div id="container" class="ui grid">
+        <!--navigation area-->
+        <div class="row navigation">
+            <div class="column">
+                <div class="ui top fixed borderless menu navigation-bar">
+                    <div class="ui large buttons">
+                        <button class="ui button teal quit change-on-mobile" id="leave-button"
+                                data-url="{{ url_for('chat.leave_room', rn=room_name ) }}">QUIT
+                        </button>
+                    </div>
+                    <div class="item change-on-mobile">
+                        <div class="ui label black basic change-on-mobile" id="user-online">
+                            <i class="user icon"></i>
+                            {% include 'chat/_top_bar_status_users.html' %}
+                        </div>
+                    </div>
+                    <div class="right menu hide-on-mobile">
+                        <div class="item">
+                            <button class="ui button orange basic" data-room="{{ room_name }}" id="room_id">Room: {{
+                                                                                                            room_name }}
+                            </button>
+                        </div>
+                        <a class="item" id="toggle-sidebar">
+                            <i class="sidebar icon"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--drawing area-->
+        <div id="canvas" class="row">
+            <div class="column">
+                {% block canvas %}{% endblock %}
+                <div class="canvas-container">
     {% if leader == user.nickname %}
         <div id="canvas-tool">
             <div class="ui toggle icon button canvastool-pencil active" id="canvastool-pencil">
@@ -67,28 +109,31 @@
         <div class="ui icon button toggle canvastool-rank active">
             <i class="trophy icon"></i>
         </div>
-        <div id="rank" >
-            <div class="ui list flex-on-mobile">
-                    {% for user in users %}
-                        {% include "chat/_rank.html" %}
-                    {% endfor %}
-            </div>
+        <div id="rank" class="ui list flex-on-mobile">
+            {% include "chat/_ranks.html" %}
         </div>
         <canvas id="myCanvas" class="quiz"></canvas>
         <div id="countdown"></div>
         <div id="snackbar">Someone answer is correct</div>
     </div>
-{% endblock %}
+            </div>
+        </div>
 
-{% block messages %}
-<div class="messages">
+        <!--all messages area-->
+        <div id="message-area" class="row" data-url="{{ url_for('chat.get_messages', rn=room_name) }}">
+            <div class="column">
+                {% block messages %}{% endblock %}
+                <div class="messages">
     <div class="ui text loader">Loading messages...</div>
     {% include 'chat/_messages.html' %}
 </div>
-{% endblock %}
+            </div>
+        </div>
 
-{% block inputarea %}
-    {% if current_user.is_authenticated %}
+        <!--reply message area-->
+        <div id="message-input-area" class="row">
+            {% block inputarea %}{% endblock %}
+                {% if current_user.is_authenticated %}
         <div class="twelve wide column">
             <div class="input-area">
                 <img class="pop-card input-avatar" data-position="bottom left" src="{{ current_user.gravatar }}">
@@ -111,4 +156,68 @@
             <a href="{{ url_for('auth.register') }}">Sign up</a> to send message.
         </div>
     {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Sidebar Menu -->
+<!--<div class="ui labeled icon right vertical inverted menu sidebar">-->
+<!--    <a class="item" href="{{ url_for('auth.logout') }}">-->
+<!--        <i class="power off icon"></i>Sign out-->
+<!--    </a>-->
+<!--</div>-->
+
+<div class="ui vertical right inverted sidebar menu">
+<!--    <a class="active item">Home</a>-->
+<!--    <a class="item">How to play</a>-->
+<!--    <a class="item">Get started</a>-->
+    {% if current_user.is_authenticated %}
+    <a class="active item">
+        <div id="sidebar-leave-button">
+            Back to platform
+        </div>
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="item">Log out</a>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}" class="item">Log in</a>
+    <a href="{{ url_for('auth.register') }}" class="item">Sign up</a>
+    {% endif %}
+</div>
+
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"
+        integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ=="
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+<script src="{{ url_for('static', filename='js/canvas.js') }}"></script>
+<script src="{{ url_for('static', filename='js/additional_socket.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery.knob.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery.throttle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery.classycountdown.js') }}"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
+<script type="text/javascript">
+    var csrf_token = "{{ csrf_token() }}";
+    var refresh_score_url = "{{  url_for('chat.roomscore', rn=room_name) }}";
+    var refresh_leader_url = "{{  url_for('chat.refreshleader', rn=room_name) }}";
+    var refresh_ready_url = "{{  url_for('chat.refreshreadystatus', rn=room_name) }}";
+    var current_user_id = "{{ current_user.id|default(0) }}";
+    var current_user_name = "{{ current_user.nickname|default(0) }}";
+    var current_room = "{{ room_name }}";
+    var check_answer_url = "{{ url_for('chat.check_answer') }}";
+    var return_topic = "{{ url_for('chat.get_topic') }}";
+    var clean_topic_url = "{{ url_for('chat.clean_topic') }}";
+    var drawer = "{{ leader|safe }}";
+
+    $(document).ready(function () {
+
+    });
+
+
+</script>
 {% endblock %}
+</body>
+</html>

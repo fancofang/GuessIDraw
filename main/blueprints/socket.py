@@ -1,75 +1,91 @@
 
 from flask import Blueprint, render_template, session
-from flask_login import current_user
-from flask_socketio import send, emit, join_room, leave_room
+from flask_socketio import send, emit, join_room, leave_room, rooms
 from flask_login import current_user
 from main.extensions import socketio, db, redis
 from main.models import User, Message, Room
 from datetime import datetime
 
 
-socket_bp = Blueprint('socket',__name__)
-
 online_users = {}
 
-
-@socketio.on('new message')
-def new_message(message_body):
-    room = session.get('room')
+@socketio.event
+def send_message(message):
+    print("server receive message",message)
+    room = message['room']
     db_room = Room.query.filter_by(name=room).first()
-    message = Message(body=message_body, user=current_user,room=db_room)
-    db.session.add(message)
+    save_message = Message(body=message['data'], user=current_user,room=db_room)
+    db.session.add(save_message)
     db.session.commit()
-    nickname = current_user.nickname
-    gravatar = current_user.gravatar
-    timestamp = datetime.utcnow()
-    room = session.get('room')
-    emit(
-        'new message',
+    emit('new_message',
         {
-            'message_html':render_template('chat/_new_message.html',
-                                           message=message_body,
-                                            avatar=gravatar,
-                                            nickname=nickname,
-                                            time = timestamp
-                                           ),
-            'message_body':message_body,
+            'type': 'message',
+            'message_html':render_template('chat/_new_message.html', message=save_message),
+            'message_body': message['data'],
+            'gravatar': current_user.gravatar,
+            'nickname': current_user.nickname,
             'user_id': current_user.id
             },
-        room=room
-    )
+        room=message['room'])
 
-@socketio.on('joined')
-def on_join(data):
-    global online_users
-    room = session.get('room')
-    r = Room.query.filter_by(name=room).first()
-    join_room(room)
-    if room not in online_users:
-        online_users[room]=[]
-    if current_user.nickname not in online_users[room]:
-        online_users[room].append(current_user.nickname)
-    emit('confirmjoin',
-        {
-        'user_html': render_template('chat/_user_image.html',user=current_user, leader=r.leader),
-        'message': current_user.nickname + ' enter the room.',
-        'user_name': current_user.nickname
-        },
-        room=room)
-
-@socketio.on('leave')
-def on_leave(data):
-    global online_users
-    room = session.get('room')
-    online_users[room].remove(current_user.nickname)
-    emit('confirmleave',
+#Client connect to server
+@socketio.event
+def join(message):
+    join_room(message['room'])
+    emit('my_response',
          {
-             'message': current_user.nickname + ' has left the room',
-             'user_name': current_user.nickname,
-             'user_id':current_user.id
+             'type': 'join',
+             'message_html': render_template('chat/_join_leave_message.html', user=current_user.nickname,
+                                             message='join in the room'),
+             'data': 'join in the room',
+             'user': current_user.nickname
+         },
+         room=message['room'])
+    # global online_users
+    # room = session.get('room')
+    # r = Room.query.filter_by(name=room).first()
+    # join_room(room)
+    # if room not in online_users:
+    #     online_users[room]=[]
+    # if current_user.nickname not in online_users[room]:
+    #     online_users[room].append(current_user.nickname)
+    # emit('confirmjoin',
+    #     {
+    #     'user_html': render_template('chat/_user_image.html',user=current_user, leader=r.leader),
+    #     'message': current_user.nickname + ' enter the room.',
+    #     'user_name': current_user.nickname
+    #     },
+    #     room=room)
+    
+@socketio.event
+def leave(message):
+    print(rooms())
+    print(message['data'])
+    room = message['room']
+    emit('my_response',
+         {
+             'type': 'leave',
+             'message_html': render_template('chat/_join_leave_message.html', user=current_user.nickname,
+                                             message='has left the room'),
+             'data': 'has left the room',
+             'user': current_user.nickname
          },
          room=room)
     leave_room(room)
+    
+# @socketio.on('leave')
+# def on_leave(data):
+#     global online_users
+#     room = session.get('room')
+#     online_users[room].remove(current_user.nickname)
+#     emit('confirmleave',
+#          {
+#              'message': current_user.nickname + ' has left the room',
+#              'user_name': current_user.nickname,
+#              'user_id':current_user.id
+#          },
+#          room=room)
+#     leave_room(room)
 
 
 @socketio.on('mousemove')
@@ -83,23 +99,40 @@ def beginanswer(data):
     room = session.get('room')
     emit('answerprocess',data,room=room)
 
-@socketio.on('ready')
-def ready(data):
-    room = session.get('room')
-    emit('ready',
-        {
-            'user_name': current_user.nickname
-        },
-        room=room)
 
-@socketio.on('cancel')
-def cancel(data):
-    room = session.get('room')
-    emit('cancel',
-        {
-            'user_name': current_user.nickname
-        },
-        room=room)
+@socketio.event
+def ready(message):
+    room = message['room']
+    redis.hset(room, current_user.nickname, 1)
+    # emit('ready',
+    #     {
+    #         'user_name': current_user.nickname
+    #     },
+    #     room=room)
+    emit('my_response',
+         {
+             'type': 'ready',
+             'data': 'is ready',
+             'user': current_user.nickname
+         },
+         room=message['room'])
+
+@socketio.event
+def cancel(message):
+    room = message['room']
+    redis.hset(room, current_user.nickname, 0)
+    emit('my_response',
+         {
+             'type': 'cancel',
+             'data': 'is not ready',
+             'user': current_user.nickname
+         },
+         room=message['room'])
+    # emit('cancel',
+    #     {
+    #         'user_name': current_user.nickname
+    #     },
+    #     room=room)
 
 @socketio.on('renew')
 def changeleader(data):

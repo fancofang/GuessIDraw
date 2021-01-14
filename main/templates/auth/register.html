@@ -39,6 +39,11 @@
                 </div>
                 {{ form.submit }}
             </form>
+            {% for message in get_flashed_messages(with_categories=True) %}
+            <div class="ui bottom attached warning message">
+                {{ message[1] }}
+            </div>
+            {% endfor %}
 
             <div class="ui message">
                 Already have account? <a href="{{ url_for('auth.login') }}">Log in</a>

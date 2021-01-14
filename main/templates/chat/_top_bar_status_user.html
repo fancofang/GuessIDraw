@@ -1,0 +1,25 @@
+
+<div class="ui image label user-on-mobile">
+    {{ user.nickname }}
+    {% if leader == user.nickname %}
+        <i class="user secret icon"></i>
+
+    {#
+    {% if status[user.nickname] == 1 %}
+            <i class="user secret icon check circle green"></i>
+        {% else %}
+            <i class="user secret icon"></i>
+        {% endif %}
+    #}
+    {% else %}
+        <i class="icon"></i>
+    {#
+            {% if status[user.nickname] == 1 %}
+                <i class="user icon check circle green"></i>
+            {% else %}
+                <i class="user icon"></i>
+            {% endif %}
+    #}
+    {% endif %}
+    <p>{{ status }}</p>
+</div>

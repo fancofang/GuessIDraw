@@ -1,9 +1,13 @@
 $(document).ready(function () {
+    var socket = io('/');
+
     // browsertitle remind message count
     var message_count = 0;
 
+    var page = 1;
 
     var ENTER_KEY = 13;
+//    var socket = io.connect();
 
     $.ajaxSetup({
         beforeSend: function (xhr, settings) {
@@ -18,151 +22,73 @@ $(document).ready(function () {
         $messages.scrollTop($messages[0].scrollHeight);
     }
 
-    function activateSemantics() {
-        $('.ui.dropdown').dropdown();
-        $('.ui.checkbox').checkbox();
-
-        //delete message
-        $('#socket_message').on('click', 'i', function () {
-            $(this).closest('.message').transition('fade');
-        });
-    };
-
-    function refreshscores() {
-        $.ajax({
-            url: refresh_score_url,
-            type: 'GET',
-            success: function (data) {
-                console.log("refresh scores")
-                console.log(data)
-                $('#rank').html(data.rank_html);
-            },
-            error: function () {
-                console.log("wrong refresh rank")
-                // $('.ui.loader').toggleClass('active');
-            }
-        });
-    };
-
-    function refreshleader() {
-        $.ajax({
-            url: refresh_leader_url,
-            type: 'GET',
-            success: function (data) {
-                console.log("refresh leader")
-                console.log(data)
-                $('#user-online').html(data.leader_html);
-            },
-            error: function () {
-                console.log("wrong refresh rank")
-                // $('.ui.loader').toggleClass('active');
-            }
-        });
-    };
-
-    function refreshreadystatus() {
-        $.ajax({
-            url: refresh_ready_url,
-            type: 'GET',
-            success: function (data) {
-                console.log("refresh status")
-                console.log(data)
-                $('#user-online').html(data.status_html);
-            },
-            error: function () {
-                console.log("wrong refresh rank")
-                // $('.ui.loader').toggleClass('active');
-            }
-        });
-    };
-
-
-
-
-
-    var socket = io();
-
-    // connect to socket, send to server to join room
-    socket.on('connect', function() {
-        console.log("connect")
-        console.log($('#room_id').data('room'))
-        socket.emit('join',{data: 'I\'m connected!', room:$('#room_id').data('room')});
-    });
-
-    // submit leave room
-    $('#leave-button, #sidebar-leave-button').on('click', function(){
-        socket.emit('leave',{data: 'I\'m leave!', room:$('#room_id').data('room')});
-        window.location.href = $('#leave-button').data('url');
-    });
-
-    socket.on('my_response', function(msg, cb) {
-        // run different function depending on different type
-        if (msg.type == 'join' || msg.type == 'leave') {
-            console.log("wow,some leave", msg.type)
-            // 要执行刷新部分界面的程序
-            refreshscores();
-            refreshleader();
-            $('.messages').append(msg.message_html);
-            scrollToBottom();
+    function load_messages() {
+        var $messages = $('.messages');
+        var position = $messages.scrollTop();
+        if (position === 0) {
+            page++;
+            $('.ui.loader').toggleClass('active');
+            $.ajax({
+                url: messages_url,
+                type: 'GET',
+                data: {page: page},
+                success: function (data) {
+                    var before_height = $messages[0].scrollHeight;
+                    $(data).prependTo(".messages").hide().fadeIn(800);
+                    var after_height = $messages[0].scrollHeight;
+                    flask_moment_render_all();
+                    $messages.scrollTop(after_height - before_height);
+                    $('.ui.loader').toggleClass('active');
+                    activateSemantics();
+                },
+                error: function () {
+                    $('.ui.loader').toggleClass('active');
+                }
+            });
         }
-        else if( msg.type == 'ready' || msg.type == 'cancel'){
-            refreshreadystatus();
-        }
-        // if (msg.type == 'join') {
-        //     // 要执行刷新部分界面的程序
-        // }
-        // else if(msg.type == 'leave')
-        // {
-        //
-        // }
-
-        // $.ajax({
-        //     url: refresh_url,
-        //     type: 'GET',
-        //     success: function (data) {
-        //         console.log(data)
-        //         $('#rank').html(data.rank_html);
-        //     },
-        //     error: function () {
-        //         console.log("wrong refresh rank")
-        //         // $('.ui.loader').toggleClass('active');
-        //     }
-        // });
-
-    });
-
-
-
-
-
-    // submit message
-    $('#message-textarea').on('keydown', new_message.bind(this));
+    }
 
     // submit message
     function new_message(e) {
         var $textarea = $('#message-textarea');
         var message_body = $textarea.val().trim();
         if (e.which === ENTER_KEY && !e.shiftKey && message_body) {
-            e.preventDefault();
-            console.log("ready to send server",message_body)
-            socket.emit('send_message', { data: message_body, room:$('#room_id').data('room')});
+            socket.emit('new message', message_body);
             $textarea.val('')
         }
     };
 
-     // receive server "new message" event
-    socket.on('new_message', function (data) {
-        console.log("new message",data.message_body)
-        message_count++;
-        // if browser not in focus
-        if (!document.hasFocus()) {
-            document.title = '(' + message_count + ') ' + 'GuessIDraw';
+    // submit leave room
+    function leave_room() {
+        socket.emit('leave', {});
+    }
+
+    function messageNotify(data) {
+        if (Notification.permission !== "granted")
+            Notification.requestPermission();
+        else {
+            var notification = new Notification("Message from " + data.nickname, {
+                icon: data.gravatar,
+                body: data.message_body.replace(/(<([^>]+)>)/ig, "")
+            });
+
+            notification.onclick = function () {
+                window.open(root_url);
+            };
+            setTimeout(function () {
+                notification.close()
+            }, 4000);
         }
-        $('.messages').append(data.message_html);
-        flask_moment_render_all();
-        scrollToBottom();
-        // activateSemantics();
-    });
+    }
+
+    function activateSemantics() {
+        $('.ui.dropdown').dropdown();
+        $('.ui.checkbox').checkbox();
+
+        $('.message .close').on('click', function () {
+            $(this).closest('.message').transition('fade');
+        });
+    };
 
 
     function inform(message) {
@@ -187,15 +113,14 @@ $(document).ready(function () {
         });
         $(window).focus(function () {
             message_count = 0;
-            document.title = $('#room_id').data('room') +' - GuessIDraw';
+            document.title = 'DrawSomething';
         });
         activateSemantics();
         scrollToBottom();
     }
 
 
-
-
+    //socket functions
     //receive server "leave room" event
     socket.on('confirmleave', function(data) {
         online = document.getElementsByClassName('ui image label');
@@ -286,31 +211,35 @@ $(document).ready(function () {
 
     });
 
-//     // receive server "update score" event
-//     socket.on('updatescore', function(data) {
-//         online = document.getElementsByClassName('rank-item');
-//         for(var i=0;i<online.length;i++){
-//             header = online[i].getElementsByClassName("content")[0].getElementsByClassName("header")[0]
-//             score = online[i].getElementsByClassName("content")[0].getElementsByClassName("point")[0]
-//             name = header.innerText.replace(/^\s+|\s+$/g,"");
-//             if (name in data){
-//                 score.innerText = data[name];
-//             }
-//         };
-// //        $('.user-image').append(data.user_html);
-//     });
+    // receive server "update score" event
+    socket.on('updatescore', function(data) {
+        online = document.getElementsByClassName('rank-item');
+        for(var i=0;i<online.length;i++){
+            header = online[i].getElementsByClassName("content")[0].getElementsByClassName("header")[0]
+            score = online[i].getElementsByClassName("content")[0].getElementsByClassName("point")[0]
+            name = header.innerText.replace(/^\s+|\s+$/g,"");
+            if (name in data){
+                score.innerText = data[name];
+            }
+        };
+//        $('.user-image').append(data.user_html);
+    });
 
+    // connect to socket, send to server to join room
+    socket.on('connect', function() {
+        socket.emit('joined',{});
+    });
 
-    // socket.on('changeleader', function(data) {
-    //     online = document.getElementsByClassName('ui image label');
-    //     for(var i=0;i<online.length;i++){
-    //         name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-    //         if (data.leader == name) {
-    //             online[i].getElementsByTagName('i')[0].setAttribute("class","user secret icon");
-    //         }
-    //     };
-    //     location.reload();
-    // });
+    socket.on('changeleader', function(data) {
+        online = document.getElementsByClassName('ui image label');
+        for(var i=0;i<online.length;i++){
+            name = online[i].innerText.replace(/^\s+|\s+$/g,"");
+            if (data.leader == name) {
+                online[i].getElementsByTagName('i')[0].setAttribute("class","user secret icon");
+            }
+        };
+        location.reload();
+    });
 
     // receive "draw" event
     socket.on('draw', function (drawdata) {
@@ -322,29 +251,47 @@ $(document).ready(function () {
         inform(data['message']);
     });
 
+    // receive "ready" event
+    socket.on('ready', function (data) {
+        online = document.getElementsByClassName('ui image label');
+        for(var i=0;i<online.length;i++){
+            name = online[i].innerText.replace(/^\s+|\s+$/g,"");
+            if (data.user_name == name) {
+                 online[i].getElementsByTagName('i')[0].classList.add('check','circle','green');
+            }
+        };
+    });
 
-    // // receive "ready" event
-    // socket.on('ready', function (data) {
-    //     online = document.getElementsByClassName('ui image label');
-    //     for(var i=0;i<online.length;i++){
-    //         name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-    //         if (data.user_name == name) {
-    //              online[i].getElementsByTagName('i')[0].classList.add('check','circle','green');
-    //         }
-    //     };
-    // });
-    //
-    // // receive "cancel ready" event
-    // socket.on('cancel', function (data) {
-    //     online = document.getElementsByClassName('ui image label');
-    //     for(var i=0;i<online.length;i++){
-    //         name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-    //         if (data.user_name == name) {
-    //              online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
-    //         }
-    //     };
-    // });
+    // receive "cancel ready" event
+    socket.on('cancel', function (data) {
+        online = document.getElementsByClassName('ui image label');
+        for(var i=0;i<online.length;i++){
+            name = online[i].innerText.replace(/^\s+|\s+$/g,"");
+            if (data.user_name == name) {
+                 online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
+            }
+        };
+    });
 
+    // receive server "new message" event
+    socket.on('new message', function (data) {
+        message_count++;
+        // if browser not in focus
+        if (!document.hasFocus()) {
+            document.title = '(' + message_count + ') ' + 'CatChat';
+        }
+        if (data.user_id !== current_user_id) {
+            messageNotify(data);
+        }
+        $('.messages').append(data.message_html);
+        flask_moment_render_all();
+        scrollToBottom();
+        activateSemantics();
+    });
+
+
+    // submit message
+    $('#message-textarea').on('keydown', new_message.bind(this));
 
     // submit draw
     $('#myCanvas').on('mousemove', function(){
@@ -367,7 +314,10 @@ $(document).ready(function () {
         socket.emit('mousemove', senddata);
     });
 
-
+    // submit leave room
+    $('.quit').on('click', function(){
+        leave_room();
+    });
 
 
     // submit begin the game
@@ -406,15 +356,15 @@ $(document).ready(function () {
     $('#ready').on('click', function(){
         $('#ready').toggleClass('ready');
         if($('#ready').hasClass('ready')){
-            // socket.emit('ready',{status:'ready'});
-            socket.emit('ready',{data: 'ready', room:$('#room_id').data('room')});
+            socket.emit('ready',{status:'ready'});
         }
         else{
-            socket.emit('cancel',{data: 'cancel', room:$('#room_id').data('room')});
+            socket.emit('cancel',{status:'cancel'});
         }
     });
 
-
+    // load more messages
+    $('.messages').scroll(load_messages);
 
     $("#answer-textarea").change(function(){
         var $answer_textarea = $('#answer-textarea');

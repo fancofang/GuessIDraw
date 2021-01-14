@@ -1,0 +1,100 @@
+.msg {
+  right: 0%;
+  margin-left: -50%;
+  position: fixed!important;
+  top: 45px;
+  width: 25%;
+  z-index: 100;
+}
+.platform-button {
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  bottom: 20px;
+  left: 20px;
+  z-index: 999;
+}
+
+.show-on-mobile {
+    visibility: hidden;
+    display: none!important;
+}
+
+p.vertical.hidden {
+    display:block;
+    line-height:unset;
+}
+
+.ui.segments {
+  margin: 0;
+}
+
+.ClassyCountdown-wrapper > div {
+    display: inline-block;
+    position: relative;
+    width: calc(100% - 20px);
+    margin: 10px;
+}
+
+.ClassyCountdown-wrapper .ClassyCountdown-value {
+    width: 100%;
+    line-height: 1em;
+    position: absolute;
+    top: 50%;
+    text-align: center;
+    left: 0px;
+    display: block;
+}
+
+.no-border {
+    border: none!important;
+    box-shadow: none!important;
+}
+
+@media only screen and (max-width: 768px) {
+  .msg {
+    width: 50%;
+  }
+  .messages {
+    margin-left: -361.5px;
+    width: 723px;
+  }
+
+      .hide-on-mobile {
+        visibility: hidden;
+        clear: both;
+        float: left;
+        margin: 10px auto 5px 20px;
+        width: 28%;
+        display: none!important;
+    }
+
+    .show-on-mobile {
+        visibility: visible;
+        display: block!important;
+        padding: 10px;
+    }
+
+        .ui.vertical.divider,p.vertical.hidden {
+        display:none;
+    }
+}
+
+
+/* Small Monitor */
+
+@media only screen and (min-width: 992px) and (max-width: 1199px) {
+  .messages {
+    margin-left: -466.5px;
+    width: 933px;
+  }
+}
+
+/* Large Monitor */
+
+@media only screen and (min-width: 1200px) {
+  .messages {
+    margin-left: -563.5px;
+    width: 1127px;
+  }
+}

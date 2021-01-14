@@ -13,19 +13,14 @@ def login():
         flash('You already log in.')
         return redirect(url_for('chat.index'))
     form = LoginForm()
-    print("a")
     if form.validate_on_submit():
-        print("b")
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is not None:
             password = form.password.data
             if user.verify_password(password):
-                print("c")
                 remember = form.remember.data
-                print(remember)
-                flash('Welcome.')
-                login_user(user)
-                return redirect(url_for('chat.test_page'))
+                login_user(user,remember)
+                return redirect(url_for('chat.platform'))
             else:
                 flash('You email or password is wrong, please try again')
         else:
@@ -37,7 +32,7 @@ def login():
 @auth_bp.route('/logout')
 @login_required
 def logout():
-    session['id'] = current_user.id
+    # session['id'] = current_user.id
     logout_user()
     # return redirect(url_for('chat.leave_room'))
     return redirect_back()
@@ -45,27 +40,24 @@ def logout():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm()
     if current_user.is_authenticated:
-        return redirect(url_for('chat.index'))
-    print(request)
-
-    if request.method == 'POST':
+        return redirect(url_for('index.index'))
+    form = RegisterForm()
+    if form.validate_on_submit():
         email = request.form['email'].lower()
         user = User.query.filter_by(email=email).first()
+        print(user)
         if user is not None:
-            print('user already registered')
             flash('The email is already registered, please log in.')
-            return redirect(url_for('chat.index'))
-
+            return redirect(url_for('auth.login'))
         nickname = request.form['nickname']
         password = request.form['password1']
         user = User(email=email, nickname=nickname)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        login_user(user)
-        return redirect(url_for('chat.index'))
+        flash('Registered successful, please log in.')
+        return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html', form=form)
 
