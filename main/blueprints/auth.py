@@ -12,12 +12,14 @@ def login():
     if current_user.is_authenticated:
         flash('You already log in.')
         return redirect(url_for('chat.index'))
+    print("check login")
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is not None:
             password = form.password.data
             if user.verify_password(password):
+                print("login in success")
                 remember = form.remember.data
                 login_user(user,remember)
                 return redirect(url_for('chat.platform'))

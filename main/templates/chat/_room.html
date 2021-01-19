@@ -1,9 +1,53 @@
+{#
 <div class="item">
     <div class="right floated content">
-        <a class="ui button" href="{{ url_for('chat.join_room', rn=room.name) }}">Join</a>
+        <button class="ui button" data-url="{{ url_for('chat.join_room', rn=room.name) }}"
+                data-public="{% if room.password %}false{% else %}true{% endif %}"
+                data-room="{{ room.name }}">
+            {% if room.password %}
+                <i class="lock icon"></i>
+            {% endif %}
+            Join
+        </button>
     </div>
-    <img class="ui avatar image" src="{{ leaders[room.leader] }}">
-    <div class="content">
-        {{ room.leader }}
-    </div>
+<!--    <img class="ui avatar image" src="{{ leaders[room.leader] }}">-->
+<!--    <div class="content">-->
+<!--        <h5 class="header">-->
+<!--            {{ room.leader }}</h5>-->
+<!--        <div class="description">Room: {{ room.name }}</div>-->
+<!--    </div>-->
+    <h3 class="ui grey header">
+        <img class="ui avatar image" src="{{ leaders[room.leader] }}">
+          <div class="content">
+            {{ room.leader }}
+            <div class="sub header">Room: {{ room.name }}</div>
+          </div>
+    </h3>
 </div>
+#}
+
+
+
+<div class="item">
+    <div class="ui small image">
+      <img src="{{ leaders[room.leader] }}">
+    </div>
+    <div class="middle aligned content">
+      <div class="header">
+        {{ room.leader }}
+      </div>
+      <div class="description">
+        Room: {{ room.name }}
+      </div>
+      <div class="extra">
+                <button class="ui button" data-url="{{ url_for('chat.join_room', rn=room.name) }}"
+                data-public="{% if room.password %}false{% else %}true{% endif %}"
+                data-room="{{ room.name }}">
+            {% if room.password %}
+                <i class="lock icon"></i>
+            {% endif %}
+            Join
+        </button>
+      </div>
+    </div>
+  </div>

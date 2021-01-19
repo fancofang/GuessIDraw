@@ -243,20 +243,11 @@ $(document).ready(function () {
             $(".canvastool-eraser").addClass("active");
             senddata.status = 'cleaning';
         });
-
-
     }
     else{
         $(".canvastool-pencil").addClass('invisible');
         $(".canvastool-eraser").addClass('invisible');
         $(".canvastool-trash").addClass('invisible');
-
-
-
-
-
-
-
     }
 
 

@@ -11,12 +11,16 @@ topic = {}
 # redis describtion
 # There are serveral type use in redis
 # 1. Set type: the key is "room" which store all of room name;
+
 # 2. Zset type: the key is "room name + Score" which store the players in the room and their scores.
+
 # 3. Hash type: the key is "roomstatus", and the field is each of room name. the value is the room status, if 1 that
 #    means it's on the game, else means off the game.
+
 # 4. Hash type: the key is each of room name, and the field is each of room member. the value is user's status, if 1 that
 #    means he is ready, else means not. Default is 0.
 
+# 5. Hash type: the key is "topic", and the field is  each of room name. the value is the answer of the room.
 
 
 
@@ -32,8 +36,8 @@ def before_request():
 def platform():
     rooms = Room.query.all()
     leaders = { room.leader for room in rooms}
-    print(leaders)
     leader_dict = { name:User.query.filter_by(nickname=name).first().gravatar for name in leaders}
+    is_private = {room.name:True  for room in rooms if room.password}
     # for name in leaders:
     #     user = User.query.filter_by(nickname=name).first()
     #     print(user,user.gravatar)
@@ -46,7 +50,7 @@ def platform():
     # if room is not None:
     #     return redirect(url_for('chat.join_room', rid=room.id))
     # session.pop(room_name, None)
-    return render_template('chat/platform.html', rooms=rooms, leaders=leader_dict)
+    return render_template('platform.html', rooms=rooms, leaders=leader_dict)
 
 
 
@@ -67,9 +71,10 @@ def room(rn):
 @chat_bp.route('/create',  methods=['GET', 'POST'])
 def create_room():
     name = request.form['name']
+    password = request.form['pass']
     room = Room.query.filter_by(name=name).first()
     if room is None and not redis.sismember("room",name):
-        new_room = Room(name=name)
+        new_room = Room(name=name, password=password)
         new_room.set_leader(current_user.nickname)
         db.session.add(new_room)
         db.session.commit()
@@ -80,45 +85,78 @@ def create_room():
         db.session.commit()
         redis.zadd(name + "_score",{current_user.nickname:0})
         redis.hset(room.name, current_user.nickname, 0)
-        print("success")
-        return jsonify(result="success", type="create", room=new_room.name, join_url='/join/'+room.name)
+        return jsonify(result="success", type="create", data={"room":new_room.name, "room_url":url_for('chat.room', rn=room.name)})
         # return redirect(url_for('chat.join_room', rn=new_room.name))
-    return jsonify(result="fail", type="create", message='Sorry, The room is already exist.')
+    return jsonify(result="fail", type="create", message='Sorry, the name is alreay existed, please change another.')
 
-@chat_bp.route('/search',  methods=['GET', 'POST'])
+@chat_bp.route('/search',  methods=['POST'])
 def search_room():
+    print("in search_room")
     name = request.form['room']
     room = Room.query.filter_by(name=name).first()
     if room is not None:
-        return redirect(url_for('chat.join_room', rn=room.name))
-    flash('Sorry, the room doesn`t exist.')
-    return redirect(url_for('chat.platform'))
+        return jsonify(result="success",type="search", data={'room':room.name, 'is_public': True if room.password else False, 'join_url':url_for('chat.join_room', rn=room.name)})
+    return jsonify(result="fail",type="search", message='Can\'t find the room.')
+    
+    
+    # if room is not None:
+    #     return redirect(url_for('chat.join_room', rn=room.name))
+    # flash('Sorry, the room doesn`t exist.')
+    # return redirect(url_for('chat.platform'))
 
-@chat_bp.route('/join/<string:rn>')
+@chat_bp.route('/join/<string:rn>', methods=['POST'])
 def join_room(rn):
-    print("ready to join room")
     room = Room.query.filter_by(name=rn).first()
-    print(len(room.users))
     if room is None:
-        flash("The room doesn't exist.")
-        return redirect(url_for('chat.platform'))
-    elif redis.hget("roomstatus", room.name) == 1:
-        flash('The room is on the game,please join it later.')
-        return redirect(url_for('chat.platform'))
+        return jsonify(result="fail",type="joinRoom", message="The room doesn't exist.")
+    if room.password:
+        password = request.form.get("password",None)
+        if password != room.password:
+            return jsonify(result="fail", type="joinRoom", message="Password is incorrect.")
+    if redis.hget("roomstatus", room.name) == "1":
+        return jsonify(result="fail", type="joinRoom", message="The room is on the game, please join later.")
     elif (current_user not in room.users) and len(room.users) >= 6:
-        flash('Sorry, The room is already full.')
-        return redirect(url_for('chat.platform'))
+        return jsonify(result="fail", type="joinRoom", message="Sorry, the room is already full.")
     elif current_user in room.users:
-        return redirect(url_for('chat.room', rn=room.name))
+        return jsonify(result="success", type="joinRoom", data={"room": room.name,"room_url": url_for('chat.room', rn=room.name)})
     try:
         room.users.append(current_user)
         db.session.commit()
     except:
-        flash('Sorry, The room is already full.')
-        return redirect(url_for('chat.platform'))
+        return jsonify(result="fail", type="joinRoom", dmessage="Sorry, the room is already full.")
     redis.zadd(room.name + "_score", {current_user.nickname: 0})
     redis.hset(room.name, current_user.nickname, 0)
-    return redirect(url_for('chat.room', rn=room.name))
+    return jsonify(result="success", type="joinRoom",
+                   data={"room": room.name, "room_url": url_for('chat.room', rn=room.name)})
+    # room = Room.query.filter_by(name=rn).first()
+    # if room is None:
+    #     flash("The room doesn't exist.")
+    #     return redirect(url_for('chat.platform'))
+    # if room.password:
+    #     password = request.args.get("password", None)
+    #     print(password)
+    #     if password != room.password:
+    #         flash("Password is incorrect.")
+    #         return redirect(url_for('chat.platform'))
+    # if redis.hget("roomstatus", room.name) == "1":
+    #     flash('The room is on the game,please join it later.')
+    #     return redirect(url_for('chat.platform'))
+    # elif (current_user not in room.users) and len(room.users) >= 6:
+    #     flash('Sorry, The room is already full.')
+    #     return redirect(url_for('chat.platform'))
+    # elif current_user in room.users:
+    #     return redirect(url_for('chat.room', rn=room.name))
+    # try:
+    #     room.users.append(current_user)
+    #     db.session.commit()
+    # except:
+    #     flash('Sorry, The room is already full.')
+    #     return redirect(url_for('chat.platform'))
+    # redis.zadd(room.name + "_score", {current_user.nickname: 0})
+    # redis.hset(room.name, current_user.nickname, 0)
+    # return redirect(url_for('chat.room', rn=room.name))
+    
+    
     #
     #
     # count = len(room.users)
@@ -150,9 +188,6 @@ def leave_room(rn):
         elif current_user.nickname == room.leader:
             candidate = leader_change(room.name, current_user.nickname)
             print("new leader is ",candidate)
-        # checkRoomAndChangeLeader(room.name, user.nickname)
-        
-        # db.session.commit()
         db.session.commit()
     return redirect(url_for('chat.platform'))
 
@@ -199,23 +234,31 @@ def get_messages(rn):
     return render_template('chat/_messages.html', messages=messages[::-1])
 
 
-@chat_bp.route('/checkanswer')
-def check_answer():
-    roomname = session.get('room')
+@chat_bp.route('/checkanswer/<string:rn>')
+def check_answer(rn):
     answer = request.args.get('answer')
-    if answer.lower() == topic[roomname].lower():
-        redis.zincrby(roomname, 10, current_user.nickname)
-        return "right"
-    return "wrong"
+    print("check answer:",answer)
+    room = Room.query.filter_by(name=rn).first()
+    if redis.hget("roomstatus", room.name) == "1":
+        correct_answer = redis.hget("topic", room.name)
+        if answer.lower() == correct_answer.lower():
+            redis.zincrby(room.name + "_score", 10, current_user.nickname)
+            score = redis.zscore(room.name + "_score", current_user.nickname)
+            return jsonify(result="correct", score=score, room=room.name, user=current_user.nickname)
+    return jsonify(result="wrong", room=room.name)
 
 
-@chat_bp.route('/gettopic')
-def get_topic():
-    room = session.get('room')
-    word = Word.query.get(random.randint(1, Word.query.count()))
-    redis.sadd('ongame', room)
-    topic[room]= word.name
-    return topic[room]
+@chat_bp.route('/gettopic/<string:rn>')
+def get_topic(rn):
+    room = Room.query.filter_by(name=rn).first()
+    if current_user.nickname == room.leader:
+        word = Word.query.get(random.randint(1, Word.query.count()))
+        print(word)
+        redis.hset("roomstatus", room.name, 1)
+        redis.hset("topic", room.name, word.name)
+        print("get topic:",word.name)
+        return jsonify(result="success", topic=word.name, room=room.name)
+    return jsonify(result="fail", topic=None, room=room.name)
 
 @chat_bp.route('/cleantopic')
 def clean_topic():
@@ -236,20 +279,34 @@ def roomscore(rn):
 @chat_bp.route('/room/<string:rn>/leader')
 def refreshleader(rn):
     room = Room.query.filter_by(name=rn).first()
-    print("refresh leader", room.users)
-    test = {}
-    return jsonify(leader_html=render_template('chat/_top_bar_status_users.html', users=room.users, leader=room.leader, users_status=test),
-                   room=room.name)
-
+    return jsonify(leader_html=render_template('chat/_top_bar_status_users.html', users=room.users, leader=room.leader),
+                   room=room.name,
+                   leader=room.leader)
 
 
 @chat_bp.route('/room/<string:rn>/ready')
 def refreshreadystatus(rn):
     room = Room.query.filter_by(name=rn).first()
     users_status = redis.hgetall(room.name)
+    all_ready = True
+    for user,status in users_status.items():
+        if user != room.leader and status == "0":
+            all_ready = False
+            break
     print(users_status)
-    print(type(users_status))
     return jsonify(
         status_html=render_template('chat/_top_bar_status_users.html', users=room.users, leader=room.leader,
-                                               users_status=users_status),
-                   room=room.name)
+                                               status=users_status),
+        userStatus=users_status,
+        allReady = all_ready,
+        room=room.name)
+
+
+@chat_bp.route('/check')
+def checkUserRoom():
+    if current_user.room:
+        print(current_user.room.name)
+        return jsonify(result="success", type="check",data={"room": current_user.room.name})
+    return jsonify(result="fail", type="check", message="Not in any room.")
+    
+    

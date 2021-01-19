@@ -53,6 +53,7 @@ class Room(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True, nullable=False)
+    password = db.Column(db.String(128))
     leader = db.Column(db.String(30), default='Fanco')
     users = db.relationship('User', backref='room')
     messages = db.relationship('Message', backref='room', cascade='all')

@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %} platform {% endblock %}
+
+
+{% block main%}
+
+
+<button class="circular ui icon button platform-button">
+    <i class="icon settings"></i>
+</button>
+
+
+<div class="pusher">
+    <div class="ui segment no-border" id="example1">
+        <div class="ui two column stackable grid container">
+            <!--Personal interface, hide on mobile -->
+            <div class="column hide-on-mobile">
+                <div class=" ui sticky m-top-1">
+                    <div class="ui card">
+                        <div class="ui image">
+                            <div class="content placeholder">
+                                <img class="ui fluid image" src="{{ current_user.gravatar }}">
+                            </div>
+                        </div>
+                        <div class="content">
+                            <div class="header">{{ current_user.nickname }}</div>
+                            <div class="ui center aligned basic segment">
+                                <form class="room ui form left icon input search" id="search-room"
+                                      action="{{ url_for('chat.search_room') }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="ui left icon input">
+                                        <input type="text" name="room" placeholder="Room name...">
+                                        <i class="search icon"></i>
+                                    </div>
+                                    <button class="ui blue submit button search-room" type="submit">Join</button>
+                                </form>
+                                <div class="ui horizontal divider">
+                                    Or
+                                </div>
+                                <div class="ui teal labeled icon button" id="show-create-room-modal">
+                                    Create New Room
+                                    <i class="add icon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="extra content">
+                            <span class="right floated">
+                                Joined in {{ moment(current_user.register).format('YYYY') }}
+                            </span>
+                            {% if current_user.room.name %}
+                            <span>
+                                <a href="{{ url_for('chat.room', rn=current_user.room.name) }}">Back to room <strong>{{ current_user.room.name }}</strong></a>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ui hidden error message platform">
+                        <i class="close icon"></i>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="column">
+                <!--Personal interface, show on mobile  -->
+                <div class="ui inverted blue segment show-on-mobile">
+                    <div class="ui centered card">
+                        <div class="content">
+                            <img class="right floated mini ui image" src="{{ current_user.gravatar }}">
+                            <div class="header">
+                                {{ current_user.nickname }}
+                            </div>
+                            <div class="extra content">
+                                <form class="room ui form left icon input search mobile" id="search-room-mobile"
+                                      action="{{ url_for('chat.search_room') }}" method="post">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="ui left icon input">
+                                        <input type="text" name="room" placeholder="Room name...">
+                                        <i class="search icon"></i>
+                                    </div>
+                                    <button class="ui blue submit button search-room-mobile" type="submit">Join</button>
+                                </form>
+
+                            </div>
+                            <div class="ui horizontal  divider">
+                                Or
+                            </div>
+                            <div class="ui teal bottom attached button" id="show-create-room-modal-mobile"
+                                 data-show-room="show-create-room-modal">
+                                <i class="add icon"></i>
+                                Create Room
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ui hidden mini error message platform mobile">
+                        <i class="close icon"></i>
+                    </div>
+                </div>
+
+                <!--Show all of the rooms -->
+                <div class="ui stacked segments m-top-1">
+                    <div class="ui blue inverted segment">
+                        <h1 class="ui center aligned header"> Rooms in platform</h1>
+                    </div>
+                    <div class="ui padded segment">
+<!--                        <div class="ui massive aligned divided list" id="join-room-in-platform">-->
+                        <div class="ui divided unstackable items" id="join-room-in-platform">
+                            {% for room in rooms %}
+                            {% include 'chat/_room.html' %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- create room Modal -->
+<div class="ui mini modal room create">
+    <div class="header">Create room name</div>
+    <div class="content">
+        <div class="ui form">
+            <div class="required field">
+                <label>Room</label>
+                <input type="text" id="create-room-textarea" placeholder="Room name...">
+            </div>
+            <div class="field">
+                <label>Password (optional)</label>
+                <input type="text" id="create-room-pass-textarea" placeholder="Room password...">
+            </div>
+        </div>
+
+    </div>
+    <div class="actions">
+        <button class="ui button cancel">Cancel</button>
+        <button class="ui button blue approve" id="create-room-button" data-url="{{ url_for('chat.create_room') }}">
+            Create
+        </button>
+    </div>
+    <div class="ui bottom attached warning message hidden" id="create-room-message"></div>
+</div>
+
+
+<!-- Join room password input Modal -->
+<div class="ui mini modal room join">
+    <div class="header">Room password</div>
+    <div class="content">
+        <form class="ui form" id="join-room-with-pass">
+            <div class="required field">
+                <label>Password</label>
+                <input type="text" id="join-room-pass-textarea" name="password" placeholder="Room password...">
+            </div>
+            <button class="ui button blue approve" type="submit">Join</button>
+        </form>
+    </div>
+    <div class="ui bottom attached warning message hidden" id="join-room-with-pass-message"></div>
+</div>
+
+{% endblock %}
+
+
+{% block script %}
+<script src="{{ url_for('static', filename='js/platform_script.js') }}"></script>
+{{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
+<script type="text/javascript">
+    var csrf_token = "{{ csrf_token() }}";
+    var checkUserRoom_url = "{{ url_for('chat.checkUserRoom') }}";
+
+
+    // if ($(window).width() < 700) {
+    //     $('#sticky-element').removeClass('sticky');
+    //
+    //     } else {
+    //       $('#sticky-element').addClass('sticky');
+    //     }
+</script>
+{% endblock %}

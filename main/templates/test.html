@@ -1,204 +1,34 @@
+<html>
+<head>
+        <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- Site Properties -->
+    <title>{% block title %}{% endblock %} - Guess What I Draw</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/countdown.css') }}">
+</head>
 
+<body>
+<div class="countdown">
+  <div class="countdown__colored-blocks">
+    <div class="countdown__colored-blocks-rotater">
+      <div class="countdown__colored-block"></div>
 
-
-
-{% extends 'base.html' %}
-
-
-{% block css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-{% endblock %}
-
-{% block main%}
-
-
-<button class="circular ui icon button platform-button">
-  <i class="icon settings"></i>
-</button>
-
-
-
-
-<div class="pusher">
-<div class="ui segment" id="example1">
-<div class="ui two column stackable grid container">
-    <div class="column hide-on-mobile">
-        <div class=" ui sticky m-top-1">
-            <div class="ui card">
-                <div class="ui image">
-                    <div class="content placeholder">
-                        <img class="ui fluid image" src="{{ current_user.gravatar }}">
-                    </div>
-                </div>
-                <div class="content">
-                    <div class="header">{{ current_user.nickname }}</div>
-                    <div class="ui center aligned basic segment">
-                        <form class="room ui form left icon input" method="POST"
-                              action="{{ url_for('chat.search_room') }}">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="ui left icon input">
-                                <input type="text" name="room" placeholder="Room name...">
-                                <i class="search icon"></i>
-                            </div>
-                            <div class="ui blue submit button join-room">Join</div>
-                        </form>
-                        <div class="ui horizontal divider">
-                            Or
-                        </div>
-                        <div class="ui teal labeled icon button" id="show-create-room-modal">
-                            Create New Room
-                            <i class="add icon"></i>
-                        </div>
-                        <div class="ui hidden warning message platform">
-                            <i class="close icon"></i>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="extra content">
-      <span class="right floated">
-        Joined in 2013
-      </span>
-      <span>
-        <i class="user icon"></i>
-        75 Friends
-      </span>
     </div>
-            </div>
-        </div>
-    </div>
-    <div class="column">
-        <div class="ui inverted blue segment show-on-mobile">
-            <div class="ui centered card">
-                <div class="content">
-                    <img class="right floated mini ui image" src="{{ current_user.gravatar }}">
-                    <div class="header">
-                        {{ current_user.nickname }}
-                    </div>
-                    <div class="extra content">
-                        <form class="room ui form left icon input" method="POST"
-                              action="{{ url_for('chat.search_room') }}">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="ui left icon input">
-                                <input type="text" name="room" placeholder="Room name...">
-                                <i class="search icon"></i>
-                            </div>
-                            <div class="ui blue submit button join-room">Join</div>
-                        </form>
-                        <div></div>
-                    </div>
-                    <div class="ui horizontal  divider">
-                        Or
-                    </div>
-                    <div class="ui teal bottom attached button"  id="show-create-room-modal-mobile" data-show-room="show-create-room-modal">
-                        <i class="add icon"></i>
-                        Create Room
-                    </div>
-                    <div class="ui hidden warning message platform">
-                            <i class="close icon"></i>
-                        </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="ui stacked segments m-top-1">
-            <div class="ui blue inverted segment">
-                <h1 class="ui center aligned  header"> Rooms in platform</h1>
-            </div>
-            <div class="ui padded segment">
-                <div class="ui massive aligned divided list">
-                    {% for room in rooms %}
-                        {% include 'chat/_room.html' %}
-                    {% endfor %}
-<!--                    <div class="item">-->
-<!--                        <div class="right floated content">-->
-<!--                            <div class="ui button">Add</div>-->
-<!--                        </div>-->
-<!--                        <img class="ui avatar image" src="{{ url_for('static', filename='images/guesser.jpg') }}">-->
-<!--                        <div class="content">-->
-<!--                            Lena-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <div class="item">-->
-<!--                        <div class="right floated content">-->
-<!--                            <div class="ui button">Add</div>-->
-<!--                        </div>-->
-<!--                        <img class="ui avatar image" src="{{ url_for('static', filename='images/guesser.jpg') }}">-->
-<!--                        <div class="content">-->
-<!--                            Lindsay-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <div class="item">-->
-<!--                        <div class="right floated content">-->
-<!--                            <div class="ui button">Add</div>-->
-<!--                        </div>-->
-<!--                        <img class="ui avatar image" src="{{ url_for('static', filename='images/guesser.jpg') }}">-->
-<!--                        <div class="content">-->
-<!--                            Mark-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <div class="item">-->
-<!--                        <div class="right floated content">-->
-<!--                            <div class="ui button">Add</div>-->
-<!--                        </div>-->
-<!--                        <img class="ui avatar image" src="{{ url_for('static', filename='images/guesser.jpg') }}">-->
-<!--                        <div class="content">-->
-<!--                            <div class="header">Molly</div>-->
-<!--                            <div class="description">room: room2</div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-                </div>
-            </div>
-            <p style="height: 5000px;">fda</p>
-
-
-        </div>
-    </div>
-
+    <div class="countdown__colored-blocks-inner"></div>
+    <div class="countdown__text">Ready</div>
+  </div>
+  <div class="countdown__inner">
+    <svg class="countdown__numbers" viewBox="0 0 100 100">
+      <path class="countdown__numbers-path"
+            d="M-10,20 60,20 40,50 a18,15 0 1,1 -12,19
+               Q25,44 34.4,27.4
+               l7,-7 a16,16 0 0,1 22.6,22.6 l-30,30 l35,0 L69,73
+               a20,10 0 0,1 20,10 a17,17 0 0,1 -34,0 L55,83
+               l0,-61 L40,28" />
+    </svg>
+  </div>
 </div>
-</div>
-</div>
-
-
-
-<!-- create room Modal -->
-<div class="ui modal room">
-    <div class="header">Create room name</div>
-    <div class="content">
-        <div class="ui form">
-            <div class="ui input">
-                <input type="text" id="create-room-textarea" placeholder="Room name...">
-            </div>
-        </div>
-    </div>
-    <div class="actions">
-        <button class="ui button cancel">Cancel</button>
-        <button class="ui button blue approve" id="create-room-button" data-url="{{ url_for('chat.create_room') }}">Create</button>
-    </div>
-</div>
-
-
-{% endblock %}
-
-
-{% block script %}
-<script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
-{{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
-<script type="text/javascript">
-    var csrf_token = "{{ csrf_token() }}";
-    var join_url = "{{ url_for('chat.room', rn=1)}}"
-
-
-    // create sidebar and attach to menu open
-    $('.ui.sidebar').sidebar('attach events', '.platform-button')
-    ;
-
-    // if ($(window).width() < 700) {
-    //     $('#sticky-element').removeClass('sticky');
-    //
-    //     } else {
-    //       $('#sticky-element').addClass('sticky');
-    //     }
-</script>
-{% endblock %}
+</body>
+</html>

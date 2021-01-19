@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify, redirect, url_for
 
 from main.models import Room,User
 
@@ -11,8 +11,6 @@ def index():
 
 @index_bp.route('/test')
 def test_page():
-    rooms = Room.query.all()
-    leaders = { room.leader for room in rooms}
-    print(leaders)
-    leader_dict = { name:User.query.filter_by(nickname=name).first().gravatar for name in leaders}
-    return render_template('test.html', rooms=rooms, leaders=leader_dict)
+    # room = Room.query.filter_by(name='1234').first()
+    # return jsonify(result="success", type='test')
+    return redirect(url_for('chat.checkUserRoom'))
