@@ -41,11 +41,9 @@
                 {{ message[1] }}
             </div>
             {% endfor %}
-
             <div class="ui message">
                 Don't have account? <a href="{{ url_for('auth.register') }}">register</a>
             </div>
-
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>

@@ -1,0 +1,9 @@
+{% if leader == user %}
+<div id="leaderprepare" class="ui buttons large">
+    <button id="begin" class="ui button orange disabled inputarea-button">Begin</button>
+</div>
+{% else %}
+<div id="guestprepare" class="ui buttons large">
+    <button id="ready" class="ui toggle button inputarea-button">Ready</button>
+</div>
+{% endif %}

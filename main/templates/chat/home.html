@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ room_name }} - Guess What I Draw</title>
-    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<!--    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}">-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/countdown.css') }}">
     <!--    <link rel="stylesheet" href="{{ url_for('static', filename='css/test.css') }}">-->
 </head>
 <body>
@@ -25,7 +27,6 @@
                     </div>
                     <div class="item change-on-mobile">
                         <div class="ui label black basic change-on-mobile" id="user-online">
-                            <i class="user icon"></i>
                             {% include 'chat/_top_bar_status_users.html' %}
                         </div>
                     </div>
@@ -46,76 +47,20 @@
         <!--drawing area-->
         <div id="canvas" class="row">
             <div class="column">
-                {% block canvas %}{% endblock %}
                 <div class="canvas-container">
-    {% if leader == user.nickname %}
-        <div id="canvas-tool">
-            <div class="ui toggle icon button canvastool-pencil active" id="canvastool-pencil">
-                <i class="pencil alternate icon"></i>
-                <div class="pencil-menu invisible">
-                    <div class="range-wrap">
-                        <input type="range" id="pencil-range" class="slider" min="1" max="30" value="5">
+                    <div id="refreshcanvas">
+                        {% include 'chat/_canvas.html' %}
                     </div>
-                    <div id="color-group">
-                        <ul>
-                            <li id="white" class="color-item" style="background-color: white;"></li>
-                            <li id="black" class="color-item active" style="background-color: black;"></li>
-                            <li id="red" class="color-item" style="background-color: #FF3333;"></li>
-                            <li id="blue" class="color-item" style="background-color: #0066FF;"></li>
-                            <li id="yellow" class="color-item" style="background-color: #FFFF33;"></li>
-                            <li id="green" class="color-item" style="background-color: #33CC66;"></li>
-                            <li id="gray" class="color-item" style="background-color: gray;"></li>
-                        </ul>
+                    <div class="ui icon button toggle canvastool-rank active">
+                        <i class="trophy icon"></i>
                     </div>
-                </div>
-            </div>
-            <div class="ui toggle icon button canvastool-eraser" id="canvastool-eraser">
-                <i class="eraser icon"></i>
-                <div class="eraser-menu invisible">
-                    <div class="range-wrap">
-                        <input type="range" id="eraser-range" class="slider" min="1" max="60" value="30">
+                    <div id="rank" class="ui list flex-on-mobile">
+                        {% include "chat/_ranks.html" %}
                     </div>
+                    <canvas id="myCanvas" class="quiz"></canvas>
+                    <div id="countdown"></div>
+                    <div id="snackbar">Someone answer is correct</div>
                 </div>
-            </div>
-        </div>
-        <div id="question" class="ui card">
-            <div class="content">
-                <div class="header">Topic
-<!--                    <button class="ui icon mini button circular refresh">-->
-<!--                      <i class="redo icon"></i>-->
-<!--                    </button>-->
-                </div>
-                <div class="description"></div>
-            </div>
-        </div>
-        <div id="reSetCanvas" class="ui icon button canvastool-trash">
-            <i class="trash alternate icon"></i>
-        </div>
-    {% else %}
-        <div class="ui icon button toggle canvastool-answer active">
-            <i class="keyboard icon"></i>
-        </div>
-        <div id="answer" class="ui card">
-            <div class="content">
-                <div class="header">Answer:</div>
-                <div class="description"></div>
-                <i id="checkanswer" class="icon"></i>
-            </div>
-            <div class="ui input">
-                <input id="answer-textarea" type="text" placeholder="your answer...">
-            </div>
-        </div>
-    {% endif %}
-        <div class="ui icon button toggle canvastool-rank active">
-            <i class="trophy icon"></i>
-        </div>
-        <div id="rank" class="ui list flex-on-mobile">
-            {% include "chat/_ranks.html" %}
-        </div>
-        <canvas id="myCanvas" class="quiz"></canvas>
-        <div id="countdown"></div>
-        <div id="snackbar">Someone answer is correct</div>
-    </div>
             </div>
         </div>
 
@@ -124,41 +69,35 @@
             <div class="column">
                 {% block messages %}{% endblock %}
                 <div class="messages">
-    <div class="ui text loader">Loading messages...</div>
-    {% include 'chat/_messages.html' %}
-</div>
+                    <div class="ui text loader">Loading messages...</div>
+                    {% include 'chat/_messages.html' %}
+                </div>
             </div>
         </div>
 
         <!--reply message area-->
         <div id="message-input-area" class="row">
             {% block inputarea %}{% endblock %}
-                {% if current_user.is_authenticated %}
-        <div class="twelve wide column">
-            <div class="input-area">
-                <img class="pop-card input-avatar" data-position="bottom left" src="{{ current_user.gravatar }}">
-                <textarea rows="2" id="message-textarea" placeholder="Write your message here... Enter to send"></textarea>
+            {% if current_user.is_authenticated %}
+            <div class="twelve wide column">
+                <div class="input-area">
+                    <img class="pop-card input-avatar" data-position="bottom left" src="{{ current_user.gravatar }}">
+                    <textarea rows="2" id="message-textarea"
+                              placeholder="Write your message here... Enter to send"></textarea>
+                </div>
             </div>
-        </div>
-        <div class="four wide column">
-            {% if leader == user.nickname %}
-                <div  id="leaderprepare" class="ui buttons large">
-                    <button id="begin" class="ui button orange inputarea-button">Begin</button>
-                </div>
+            <div class="four wide column" id="beginOrReady-button">
+                {% include "chat/_beginOrReady.html" %}
+            </div>
             {% else %}
-                <div  id="guestprepare" class="ui buttons large">
-                    <button id="ready" class="ui button inputarea-button">Ready</button>
-                </div>
+            <div class="ui floating message">Please <a href="{{ url_for('auth.login') }}">Sign in</a> or
+                <a href="{{ url_for('auth.register') }}">Sign up</a> to send message.
+            </div>
             {% endif %}
-        </div>
-    {% else %}
-        <div class="ui floating message">Please <a href="{{ url_for('auth.login') }}">Sign in</a> or
-            <a href="{{ url_for('auth.register') }}">Sign up</a> to send message.
-        </div>
-    {% endif %}
         </div>
     </div>
 </div>
+
 
 <!-- Sidebar Menu -->
 <!--<div class="ui labeled icon right vertical inverted menu sidebar">-->
@@ -166,11 +105,7 @@
 <!--        <i class="power off icon"></i>Sign out-->
 <!--    </a>-->
 <!--</div>-->
-
 <div class="ui vertical right inverted sidebar menu">
-<!--    <a class="active item">Home</a>-->
-<!--    <a class="item">How to play</a>-->
-<!--    <a class="item">Get started</a>-->
     {% if current_user.is_authenticated %}
     <a class="active item">
         <div id="sidebar-leave-button">
@@ -184,6 +119,35 @@
     {% endif %}
 </div>
 
+<!-- Countdown Modal -->
+<div class="ui basic modal transition hidden">
+    <div class="content">
+        <div class="center">
+            <div class="countdown">
+                <div class="countdown__colored-blocks">
+                    <div class="countdown__colored-blocks-rotater">
+                        <div class="countdown__colored-block"></div>
+
+                    </div>
+                    <div class="countdown__colored-blocks-inner"></div>
+                    <div class="countdown__text">Ready</div>
+                </div>
+                <div class="countdown__inner">
+                    <svg class="countdown__numbers" viewBox="0 0 100 100">
+                        <path class="countdown__numbers-path"
+                              d="M-10,20 60,20 40,50 a18,15 0 1,1 -12,19
+               Q25,44 34.4,27.4
+               l7,-7 a16,16 0 0,1 22.6,22.6 l-30,30 l35,0 L69,73
+               a20,10 0 0,1 20,10 a17,17 0 0,1 -34,0 L55,83
+               l0,-61 L40,28" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 {% block script %}
 <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
@@ -194,27 +158,30 @@
 <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
 <script src="{{ url_for('static', filename='js/canvas.js') }}"></script>
 <script src="{{ url_for('static', filename='js/additional_socket.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.knob.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.throttle.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.classycountdown.js') }}"></script>
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script src="{{ url_for('static', filename='js/drawing_script.js') }}"></script>
 {{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
 <script type="text/javascript">
     var csrf_token = "{{ csrf_token() }}";
     var refresh_score_url = "{{  url_for('chat.roomscore', rn=room_name) }}";
     var refresh_leader_url = "{{  url_for('chat.refreshleader', rn=room_name) }}";
     var refresh_ready_url = "{{  url_for('chat.refreshreadystatus', rn=room_name) }}";
-    var current_user_id = "{{ current_user.id|default(0) }}";
+    var change_leader_url = "{{  url_for('chat.leader_change', rn=room_name) }}";
     var current_user_name = "{{ current_user.nickname|default(0) }}";
-    var current_room = "{{ room_name }}";
-    var check_answer_url = "{{ url_for('chat.check_answer') }}";
-    var return_topic = "{{ url_for('chat.get_topic') }}";
-    var clean_topic_url = "{{ url_for('chat.clean_topic') }}";
-    var drawer = "{{ leader|safe }}";
+    var check_answer_url = "{{ url_for('chat.check_answer', rn=room_name) }}";
+    var get_topic = "{{ url_for('chat.get_topic', rn=room_name) }}";
 
     $(document).ready(function () {
-
     });
+    var drawer = {
+      value: "{{ leader|safe }}",
+      get getVar() {
+        return this.value;
+      },
+      set saveVar(value) {
+        this.value = value;
+        Initcanvas();
+      }
+    }
 
 
 </script>

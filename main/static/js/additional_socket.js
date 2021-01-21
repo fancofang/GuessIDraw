@@ -2,7 +2,6 @@ $(document).ready(function () {
     // browsertitle remind message count
     var message_count = 0;
 
-
     var ENTER_KEY = 13;
 
     $.ajaxSetup({
@@ -12,6 +11,33 @@ $(document).ready(function () {
             }
         }
     });
+
+    // // Listen browser refresh event
+    // window.addEventListener('beforeunload', function (e) {
+    //     // Cancel the event
+    //     e.preventDefault(); // If you prevent default behavior in Mozilla Firefox prompt will always be shown
+    //     // Chrome requires returnValue to be set
+    //     e.returnValue = '';
+    //     // alert("Data will be lost if you leave the page, are you sure?")
+    // });
+
+    function init() {
+        // desktop notification
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!Notification) {
+                alert('Desktop notifications not available in your browser.');
+                return;
+            }
+            if (Notification.permission !== "granted")
+                Notification.requestPermission();
+        });
+        $(window).focus(function () {
+            message_count = 0;
+            document.title = $('#room_id').data('room') + ' - GuessIDraw';
+        });
+        activateSemantics();
+        scrollToBottom();
+    }
 
     function scrollToBottom() {
         var $messages = $('.messages');
@@ -28,18 +54,24 @@ $(document).ready(function () {
         });
     };
 
+    function inform(message) {
+        var x = document.getElementById("snackbar")
+        x.className = "show";
+        x.innerHTML = message;
+        setTimeout(function () {
+            x.className = x.className.replace("show", "");
+        }, 3000);
+    };
+
     function refreshscores() {
         $.ajax({
             url: refresh_score_url,
             type: 'GET',
             success: function (data) {
-                console.log("refresh scores")
-                console.log(data)
                 $('#rank').html(data.rank_html);
             },
             error: function () {
                 console.log("wrong refresh rank")
-                // $('.ui.loader').toggleClass('active');
             }
         });
     };
@@ -49,110 +81,160 @@ $(document).ready(function () {
             url: refresh_leader_url,
             type: 'GET',
             success: function (data) {
-                console.log("refresh leader")
-                console.log(data)
                 $('#user-online').html(data.leader_html);
             },
             error: function () {
-                console.log("wrong refresh rank")
-                // $('.ui.loader').toggleClass('active');
+                console.log("wrong refresh leader")
             }
         });
     };
+
+    function changeleader() {
+        $.ajax({
+            url: change_leader_url,
+            type: 'GET',
+            success: function (data) {
+                socket.emit('leave', {data: 'I\'m leave!', room: $('#room_id').data('room')});
+                socket.emit('updatecanvas', {
+                    data: 'update canvas',
+                    room: $('#room_id').data('room'),
+                    leader: data.data.leader
+                });
+            },
+            error: function () {
+                console.log("wrong refresh leader")
+            }
+        });
+    };
+
 
     function refreshreadystatus() {
         $.ajax({
             url: refresh_ready_url,
             type: 'GET',
             success: function (data) {
-                console.log("refresh status")
-                console.log(data)
                 $('#user-online').html(data.status_html);
+                if (data.allReady) {
+                    $('#begin').removeClass('disabled');
+                } else {
+                    $('#begin').addClass('disabled');
+                }
             },
             error: function () {
-                console.log("wrong refresh rank")
+                console.log("wrong refresh status")
                 // $('.ui.loader').toggleClass('active');
             }
         });
     };
 
+    function getTopic() {
+        $.ajax({
+            url: get_topic,
+            type: 'GET',
+            success: function (data) {
+                console.log("get Topic", data)
+                $('#question .content .description').text(data.topic)
+            },
+            error: function () {
+                console.log("wrong get topic")
+            }
+        });
+    };
 
+    function answerQuetion(data) {
+        $.ajax({
+            url: check_answer_url,
+            type: 'GET',
+            data: {answer: data},
+            success: function (data) {
+                if (data.result == 'correct') {
+                    $("#checkanswer").removeClass('close red');
+                    $("#checkanswer").addClass('check circle green');
+                    socket.emit('stopDraw', {data: 'got the point', user: data.user, room: $('#room_id').data('room')});
+                } else {
+                    console.log("wrong answer")
+                    $("#checkanswer").removeClass('check circle green');
+                    $("#checkanswer").addClass('close red');
+                }
+            }
+        });
+    };
 
+    function resetAll() {
+        $("#answer .ui.input").remove();
+        $('#answer .content .description').text('');
+        $("#checkanswer").removeClass('close red check circle green');
+        $('#ready').removeClass('active');
+        $('#ready').removeClass('disabled');
+        $('#question .content .description').text('');
+        //clean canvas
+        cleancanvas();
+        refreshscores();
+        //after reset, need to refresh ready status.
+
+    };
 
 
     var socket = io();
 
     // connect to socket, send to server to join room
-    socket.on('connect', function() {
-        console.log("connect")
-        console.log($('#room_id').data('room'))
-        socket.emit('join',{data: 'I\'m connected!', room:$('#room_id').data('room')});
+    socket.on('connect', function () {
+        socket.emit('join', {data: 'I\'m connected!', room: $('#room_id').data('room')});
     });
 
-    // submit leave room
-    $('#leave-button, #sidebar-leave-button').on('click', function(){
-        socket.emit('leave',{data: 'I\'m leave!', room:$('#room_id').data('room')});
-        window.location.href = $('#leave-button').data('url');
-    });
-
-    socket.on('my_response', function(msg, cb) {
+    socket.on('my_response', function (msg, cb) {
         // run different function depending on different type
-        if (msg.type == 'join' || msg.type == 'leave') {
-            console.log("wow,some leave", msg.type)
-            // 要执行刷新部分界面的程序
+        if (msg.type == 'join') {
             refreshscores();
             refreshleader();
             $('.messages').append(msg.message_html);
             scrollToBottom();
-        }
-        else if( msg.type == 'ready' || msg.type == 'cancel'){
+        } else if (msg.type == 'beforeleave') {
+            if (msg.changeLeader) {
+                window.location.href = $('#leave-button').data('url');
+                changeleader()
+            } else {
+                window.location.href = $('#leave-button').data('url');
+            }
+        } else if (msg.type == 'leave') {
+            refreshscores();
+            refreshleader();
+            $('.messages').append(msg.message_html);
+            scrollToBottom();
+        } else if (msg.type == 'updatecanvas') {
+            $('#refreshcanvas').html(msg.canvas_html);
+            $('#beginOrReady-button').html(msg.button_html);
+            drawer.saveVar = msg.leader
+        } else if (msg.type == 'ready' || msg.type == 'cancel') {
+            refreshreadystatus();
+        } else if (msg.type == 'countdown') {
+            $('.ui.modal.basic').modal('setting', 'closable', false).modal('show');
+            setTimeout(function () {
+                $('.ui.modal.basic').modal('hide');
+                if (current_user_name == msg.leader) {
+                    getTopic();
+                } else {
+                    var ans_area = "<div class=\"ui input\"><input id=\"answer-textarea\" type=\"text\" placeholder=\"your answer...\"></div>";
+                    $('#answer').append(ans_area)
+                }
+                $('#begin').addClass('disabled');
+                $('#ready').addClass('disabled');
+            }, 3500)
+        } else if (msg.type == 'endRound') {
+            if (current_user_name == msg.leader) {
+                socket.emit('reset', {data: 'reset server all status', room: $('#room_id').data('room')});
+            }
+            resetAll();
+            socket.emit('inform', {data: msg.rightman + ' ' + msg.data, room: $('#room_id').data('room')});
+        } else if (msg.type == 'inform') {
+            inform(msg.data);
+        } else if (msg.type == 'reset') {
             refreshreadystatus();
         }
-        // if (msg.type == 'join') {
-        //     // 要执行刷新部分界面的程序
-        // }
-        // else if(msg.type == 'leave')
-        // {
-        //
-        // }
-
-        // $.ajax({
-        //     url: refresh_url,
-        //     type: 'GET',
-        //     success: function (data) {
-        //         console.log(data)
-        //         $('#rank').html(data.rank_html);
-        //     },
-        //     error: function () {
-        //         console.log("wrong refresh rank")
-        //         // $('.ui.loader').toggleClass('active');
-        //     }
-        // });
-
     });
 
-
-
-
-
-    // submit message
-    $('#message-textarea').on('keydown', new_message.bind(this));
-
-    // submit message
-    function new_message(e) {
-        var $textarea = $('#message-textarea');
-        var message_body = $textarea.val().trim();
-        if (e.which === ENTER_KEY && !e.shiftKey && message_body) {
-            e.preventDefault();
-            console.log("ready to send server",message_body)
-            socket.emit('send_message', { data: message_body, room:$('#room_id').data('room')});
-            $textarea.val('')
-        }
-    };
-
-     // receive server "new message" event
+    // receive server "new message" event
     socket.on('new_message', function (data) {
-        console.log("new message",data.message_body)
         message_count++;
         // if browser not in focus
         if (!document.hasFocus()) {
@@ -161,161 +243,18 @@ $(document).ready(function () {
         $('.messages').append(data.message_html);
         flask_moment_render_all();
         scrollToBottom();
-        // activateSemantics();
     });
-
-
-    function inform(message) {
-        var x = document.getElementById("snackbar")
-        x.className = "show";
-        x.innerHTML = message;
-        setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
-    };
-
-
-
-
-    function init() {
-        // desktop notification
-        document.addEventListener('DOMContentLoaded', function () {
-            if (!Notification) {
-                alert('Desktop notifications not available in your browser.');
-                return;
-            }
-            if (Notification.permission !== "granted")
-                Notification.requestPermission();
-        });
-        $(window).focus(function () {
-            message_count = 0;
-            document.title = $('#room_id').data('room') +' - GuessIDraw';
-        });
-        activateSemantics();
-        scrollToBottom();
-    }
-
-
-
-
-    //receive server "leave room" event
-    socket.on('confirmleave', function(data) {
-        online = document.getElementsByClassName('ui image label');
-        for(var i=0;i<online.length;i++){
-            name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-//            console.log(online[i].innerText);
-            if (data.user_name == name) {
-                online[i].parentNode.removeChild(online[i]);
-            }
-        };
-        if (data.user_id == current_user_id){
-            $.ajax({
-                    url: leader_url,
-                    type: 'GET',
-                    success: function (person) {
-                        socket.emit('renew',{person});
-                        socket.emit('inform',{message:data.message});
-                        window.location.href = leave_url;
-                    },
-                    error: function () {
-                        alert('If you leave, the room will be deleted');
-                        window.location.href = leave_url;
-                }
-            });
-        };
-    });
-
-     //receive server "join room" event
-    socket.on('confirmjoin', function(data) {
-        socket.emit('inform',{message:data.message});
-        online = document.getElementsByClassName('ui image label');
-        for(var i=0;i<online.length;i++){
-            name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-            if (data.user_name == name) {
-                online[i].parentNode.removeChild(online[i]);
-            }
-        };
-        $('#user-online').append(data.user_html);
-    });
-
-    // receive server "answer process" event
-    socket.on('answerprocess', function(data) {
-        $('.ClassyCountdown-wrapper').remove();
-        cleancanvas();
-        if(current_user_name == drawer){
-            $('#countdown').ClassyCountdown({
-            theme: data.theme,
-            end: $.now() + data.second,
-            onEndCallback: function() {
-                $('#begin').removeClass('disabled');
-                online = document.getElementsByClassName('ui image label');
-                for(var i=0;i<online.length;i++){
-                    name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-                    if (name != drawer) {
-                        online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
-                    }
-                };
-                $.ajax({
-                    url: clean_topic_url,
-                    type: 'GET',
-                    success: function (person) {
-                    }
-                });
-                socket.emit('updatescore',{});
-            }
-        });
-        }
-        else{
-            $('#ready').addClass('disabled');
-            $('#countdown').ClassyCountdown({
-            theme: data.theme,
-            end: $.now() + data.second,
-            onEndCallback: function() {
-                $('#ready').removeClass('ready disabled');
-                $('#answer-textarea').val('');
-                $('#answer .description').val('');
-                $("#checkanswer").removeClass('close red check circle green');
-                online = document.getElementsByClassName('ui image label');
-                for(var i=0;i<online.length;i++){
-                    name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-                    if (name != drawer) {
-                        online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
-                    }
-                };
-            }
-        });
-        }
-
-    });
-
-//     // receive server "update score" event
-//     socket.on('updatescore', function(data) {
-//         online = document.getElementsByClassName('rank-item');
-//         for(var i=0;i<online.length;i++){
-//             header = online[i].getElementsByClassName("content")[0].getElementsByClassName("header")[0]
-//             score = online[i].getElementsByClassName("content")[0].getElementsByClassName("point")[0]
-//             name = header.innerText.replace(/^\s+|\s+$/g,"");
-//             if (name in data){
-//                 score.innerText = data[name];
-//             }
-//         };
-// //        $('.user-image').append(data.user_html);
-//     });
-
-
-    // socket.on('changeleader', function(data) {
-    //     online = document.getElementsByClassName('ui image label');
-    //     for(var i=0;i<online.length;i++){
-    //         name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-    //         if (data.leader == name) {
-    //             online[i].getElementsByTagName('i')[0].setAttribute("class","user secret icon");
-    //         }
-    //     };
-    //     location.reload();
-    // });
 
     // receive "draw" event
-    socket.on('draw', function (drawdata) {
+    socket.on('draw', function (msg) {
+        //send to other people to clean canvas
+        if (msg.type == 'clean') {
+            cleancanvas();
+        }
         //send to other people draw details
-        showoncanvas(drawdata);
+        else {
+            showoncanvas(msg.data);
+        }
     });
 
     socket.on('inform', function (data) {
@@ -323,120 +262,172 @@ $(document).ready(function () {
     });
 
 
-    // // receive "ready" event
-    // socket.on('ready', function (data) {
+//     //receive server "leave room" event
+//     socket.on('confirmleave', function(data) {
+//         online = document.getElementsByClassName('ui image label');
+//         for(var i=0;i<online.length;i++){
+//             name = online[i].innerText.replace(/^\s+|\s+$/g,"");
+// //            console.log(online[i].innerText);
+//             if (data.user_name == name) {
+//                 online[i].parentNode.removeChild(online[i]);
+//             }
+//         };
+//         if (data.user_id == current_user_id){
+//             $.ajax({
+//                     url: leader_url,
+//                     type: 'GET',
+//                     success: function (person) {
+//                         socket.emit('renew',{person});
+//                         socket.emit('inform',{message:data.message});
+//                         window.location.href = leave_url;
+//                     },
+//                     error: function () {
+//                         alert('If you leave, the room will be deleted');
+//                         window.location.href = leave_url;
+//                 }
+//             });
+//         };
+//     });
+
+    //  //receive server "join room" event
+    // socket.on('confirmjoin', function(data) {
+    //     socket.emit('inform',{message:data.message});
     //     online = document.getElementsByClassName('ui image label');
     //     for(var i=0;i<online.length;i++){
     //         name = online[i].innerText.replace(/^\s+|\s+$/g,"");
     //         if (data.user_name == name) {
-    //              online[i].getElementsByTagName('i')[0].classList.add('check','circle','green');
+    //             online[i].parentNode.removeChild(online[i]);
     //         }
     //     };
-    // });
-    //
-    // // receive "cancel ready" event
-    // socket.on('cancel', function (data) {
-    //     online = document.getElementsByClassName('ui image label');
-    //     for(var i=0;i<online.length;i++){
-    //         name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-    //         if (data.user_name == name) {
-    //              online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
-    //         }
-    //     };
+    //     $('#user-online').append(data.user_html);
     // });
 
+    // // receive server "answer process" event
+    // socket.on('answerprocess', function(data) {
+    //     $('.ClassyCountdown-wrapper').remove();
+    //     cleancanvas();
+    //     if(current_user_name == drawer){
+    //         $('#countdown').ClassyCountdown({
+    //         theme: data.theme,
+    //         end: $.now() + data.second,
+    //         onEndCallback: function() {
+    //             $('#begin').removeClass('disabled');
+    //             online = document.getElementsByClassName('ui image label');
+    //             for(var i=0;i<online.length;i++){
+    //                 name = online[i].innerText.replace(/^\s+|\s+$/g,"");
+    //                 if (name != drawer) {
+    //                     online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
+    //                 }
+    //             };
+    //             $.ajax({
+    //                 url: clean_topic_url,
+    //                 type: 'GET',
+    //                 success: function (person) {
+    //                 }
+    //             });
+    //             socket.emit('updatescore',{});
+    //         }
+    //     });
+    //     }
+    //     else{
+    //         $('#ready').addClass('disabled');
+    //         $('#countdown').ClassyCountdown({
+    //         theme: data.theme,
+    //         end: $.now() + data.second,
+    //         onEndCallback: function() {
+    //             $('#ready').removeClass('ready disabled');
+    //             $('#answer-textarea').val('');
+    //             $('#answer .description').val('');
+    //             $("#checkanswer").removeClass('close red check circle green');
+    //             online = document.getElementsByClassName('ui image label');
+    //             for(var i=0;i<online.length;i++){
+    //                 name = online[i].innerText.replace(/^\s+|\s+$/g,"");
+    //                 if (name != drawer) {
+    //                     online[i].getElementsByTagName('i')[0].classList.remove('check','circle','green');
+    //                 }
+    //             };
+    //         }
+    //     });
+    //     }
+    //
+    // });
+
+
+    // submit leave room
+    $('#leave-button, #sidebar-leave-button').on('click', function () {
+        alert('Your score will be deleted if you leave.');
+        // window.location.href = $('#leave-button').data('url');
+        socket.emit('beforeleaving', {data: 'I\'m leave!', room: $('#room_id').data('room')});
+    });
+
+    // submit message
+    $('#message-textarea').on('keydown', function (e) {
+        var $textarea = $('#message-textarea');
+        var message_body = $textarea.val().trim();
+        if ((e.which === ENTER_KEY || e.keyCode === ENTER_KEY) && !e.shiftKey && message_body) {
+            e.preventDefault();
+            socket.emit('send_message', {data: message_body, room: $('#room_id').data('room')});
+            $textarea.val('')
+        }
+    });
 
     // submit draw
-    $('#myCanvas').on('mousemove', function(){
-        socket.emit('mousemove', senddata);
+    $('#myCanvas').on('mousemove', function () {
+        socket.emit('mousemove', {data: senddata, room: $('#room_id').data('room'), type: "draw"});
     });
 
     // submit mobile draw
-    $('#myCanvas').on('touchstart', function(){
-        socket.emit('mousemove', senddata);
-    });
-    $('#myCanvas').on('touchmove', function(){
-        socket.emit('mousemove', senddata);
-    });
-    $('#myCanvas').on('touchend', function(){
-        socket.emit('mousemove', senddata);
+    $('#myCanvas').on('touchstart touchmove touchend', function () {
+        socket.emit('mousemove', {data: senddata, room: $('#room_id').data('room'), type: "draw"});
     });
 
     // moniter host clean canvas
-    $('#reSetCanvas').on('click', function(){
-        socket.emit('mousemove', senddata);
+    $('.canvas-container').on('click', '#reSetCanvas', function () {
+        socket.emit('mousemove', {data: senddata, room: $('#room_id').data('room'), type: "clean"});
     });
 
-
-
-
     // submit begin the game
-    $('#begin').on('click', function(){
-        let isready = true;
-        online = document.getElementsByClassName('ui image label');
-        for(var i=0;i<online.length;i++){
-            name = online[i].innerText.replace(/^\s+|\s+$/g,"");
-            if (drawer == name) {
-                continue;
+    $('#message-input-area').on('click', '#begin', function () {
+        $.ajax({
+            url: refresh_ready_url,
+            type: 'GET',
+            success: function (data) {
+                if (data.allReady) {
+                    socket.emit('activeCountdown', {
+                        data: 'active count down to draw',
+                        room: $('#room_id').data('room')
+                    });
+                    // $('body > .ui.page.dimmer').dimmer('show');
+                }
+            },
+            error: function () {
+                console.log("wrong refresh status")
+                // $('.ui.loader').toggleClass('active');
             }
-            if (!online[i].getElementsByTagName('i')[0].classList.contains('check')) {
-                 isready = false;
-                 break;
-            }
-        };
-        if (isready) {
-            var beginanswer ={
-            theme: "flat-colors-very-wide",
-            second:60,
-            };
-            $.ajax({
-                url:return_topic,
-                success:function(result){
-                    $('.description').text(result);
-                    socket.emit('answertime', beginanswer);
-                    $('#begin').addClass('disabled');
-            }});
-        }
-        else {
-            inform("someone is not ready!");
-        }
+        });
     });
 
     //submit ready
-    $('#ready').on('click', function(){
-        $('#ready').toggleClass('ready');
-        if($('#ready').hasClass('ready')){
+    $('#ready').on('click', function () {
+        $('#ready').toggleClass('active');
+        if ($('#ready').hasClass('active')) {
             // socket.emit('ready',{status:'ready'});
-            socket.emit('ready',{data: 'ready', room:$('#room_id').data('room')});
-        }
-        else{
-            socket.emit('cancel',{data: 'cancel', room:$('#room_id').data('room')});
+            socket.emit('ready', {data: 'ready', room: $('#room_id').data('room')});
+        } else {
+            socket.emit('cancel', {data: 'cancel', room: $('#room_id').data('room')});
         }
     });
 
-
-
-    $("#answer-textarea").change(function(){
-        var $answer_textarea = $('#answer-textarea');
-        var input =$answer_textarea.val();
-        $('#answer .description').text(input);
-        $.ajax({
-            url:check_answer_url,
-            type: 'GET',
-            data:{answer:input},
-            success:function(result){
-                if (result == 'right'){
-                    $("#checkanswer").addClass('check circle green');
-                    $("#checkanswer").removeClass('close red');
-                    socket.emit('inform',{message:'Someone answer is correct'});
-                    inform("You answer is correct");
-                }
-                else{
-                    $("#checkanswer").removeClass('check circle green');
-                    $("#checkanswer").addClass('close red');
-                }
-            }});
-
+    $('#answer').on('keyup', "#answer-textarea", function (e) {
+        var $textarea = $('#answer-textarea');
+        var message_body = $textarea.val().trim();
+        $('#answer .description').text(message_body);
+        if ((e.which === ENTER_KEY || e.keyCode === ENTER_KEY) && !e.shiftKey && message_body) {
+            e.preventDefault();
+            answerQuetion(message_body)
+            // socket.emit('send_message', {data: message_body, room: $('#room_id').data('room')});
+            $textarea.val('')
+        }
     });
 
     init();

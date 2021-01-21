@@ -6,7 +6,6 @@ from main.configs import config
 from main.blueprints.index import index_bp
 from main.blueprints.chat import chat_bp
 from main.blueprints.auth import auth_bp
-# from main.blueprints.socket import socket_bp
 from main.models import User, Message, Room, Word
 
 def create_app(config_name=None):
@@ -37,7 +36,6 @@ def register_blueprints(app):
     app.register_blueprint(index_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(auth_bp)
-    # app.register_blueprint(socket_bp)
 
 
 def register_shell_context(app):
@@ -73,7 +71,7 @@ def register_commands(app):
         db.create_all()
 
         click.echo('Forging the data...')
-        admin = User(nickname='Fanco', email='fanghao23@hotmail.com')
+        admin = User(nickname='Fanco', email='test1@example.com')
         admin.set_password('123456')
         db.session.add(admin)
         db.session.commit()
@@ -131,20 +129,39 @@ def register_commands(app):
 
         click.echo('Generating words...')
         file = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'topic.json')
-        topic = []
         with open(file, 'r') as f:
-            temp = json.loads(f.read())
-        for catalog in temp:
-            for word in temp[catalog]:
-                topic.append(word)
-        for i in topic:
-            word = Word(name =i)
-            db.session.add(word)
-            print(word.name)
-            try:
-                db.session.commit()
+            questions = json.load(f)
+        print(questions)
+        print(type(questions))
+        for category in questions:
+            for word in questions[category]:
+                new_instance = Word(name=word, category=category)
+                db.session.add(new_instance)
+                print(word)
+        try:
+            db.session.commit()
 
-            except IntegrityError:
-                db.session.rollback()
+        except IntegrityError:
+            db.session.rollback()
 
         click.echo('Done.')
+        
+        
+    @app.cli.command()
+    def initquestion():
+        """Initialize the database of word."""
+        import json
+        file = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'topic.json')
+        with open(file, 'r') as f:
+            questions = json.load(f)
+        print(questions)
+        print(type(questions))
+        for category in questions:
+            for word in questions[category]:
+                new_instance = Word(name=word, category=category)
+                db.session.add(new_instance)
+                print(word)
+        db.session.commit()
+        
+        
+        

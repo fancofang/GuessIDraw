@@ -36,7 +36,7 @@ class User(UserMixin, db.Model):
 
     @property
     def gravatar(self):
-        return 'https://gravatar.com/avatar/%s?d=monsterid' % self.email_hash
+        return 'https://gravatar.com/avatar/%s?d=robohash' % self.email_hash
 
 class Message(db.Model):
     __tablename__ = 'messages'
@@ -53,6 +53,7 @@ class Room(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True, nullable=False)
+    password = db.Column(db.String(128))
     leader = db.Column(db.String(30), default='Fanco')
     users = db.relationship('User', backref='room')
     messages = db.relationship('Message', backref='room', cascade='all')
@@ -73,7 +74,8 @@ class Word(db.Model):
     __tablename__ = 'words'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30), unique=True, nullable=False)
+    name = db.Column(db.String(128), unique=True, nullable=False)
+    category = db.Column(db.String(128), default='Other')
 
 
 

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %} index {% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block main %}
+
+<div class="pusher">
+    <!-- Page Contents -->
+    <div class="ui container">
+        <div class="ui large secondary menu">
+            <a class="toc item">
+                <i class="sidebar icon"></i>
+            </a>
+            <a class="header item" href="{{ url_for('index.index') }}">Home</a>
+            <a class="header active item">How to play</a>
+            <a class="header item">Get started</a>
+            <div class="right menu">
+                {% if current_user.is_authenticated %}
+                <div class="item">
+                    <div class="ui button dropdown">
+                        {{ current_user.nickname }}
+                        <i class="dropdown icon"></i>
+                        <div class="menu">
+                            <a href="{{ url_for('auth.logout') }}" class="item">Log out</a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="item">
+                    <a href="{{ url_for('auth.login') }}" class="ui button">Log in</a>
+                </div>
+                <div class="item">
+                    <a href="{{ url_for('auth.register') }}" class="ui primary button">Sign Up</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="ui padded center aligned basic segment">
+        <div class="ui container">
+            <div class="ui embed" data-source="youtube" data-url="https://www.youtube.com/embed/g0N08l09y_A">
+            </div>
+        </div>
+    </div>
+
+
+    <div class="ui inverted segment footer-not-index">
+        <div class="ui container">
+            <div class="ui inverted equal height centered grid">
+                <div class="three wide column">
+                    <h4 class="ui inverted header">About</h4>
+                    <div class="ui inverted link list">
+                        <a href="#" class="item">Report issue</a>
+                        <a href="#" class="item">Contact me</a>
+                        <a href="#" class="item">FAQ</a>
+                    </div>
+                </div>
+                <div class="three wide column">
+                    <h4 class="ui inverted header">&copy; 2021 Fanco</h4>
+                </div>
+                <div class="seven wide column">
+                    <h4 class="ui inverted header">If you like the project</h4>
+                    <p>please feel free give me a thumbup.</p>
+                    <a href="https://github.com/fancofang/GuessIDraw" class="item">github</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--<div class="ui bottom fixed inverted menu">-->
+
+
+    <!--</div>-->
+    <!--<div class="ui text container">-->
+    <!--    <div class="ui one column grid">-->
+    <!--      <div class="column">1123</div>-->
+    <!--    </div>-->
+    <!--</div>-->
+</div>
+
+{% endblock %}
+
+{% block script%}
+<script>
+    $(document)
+        .ready(function () {
+            // fix menu when passed
+            $('.ui.embed').embed();
+            // create sidebar and attach to menu open
+            $('.ui.sidebar').sidebar('attach events', '.toc.item')
+            ;
+        })
+    ;
+</script>
+{% endblock %}
+
+
+
+<!--<iframe width="1280" height="720" src="https://www.youtube.com/embed/g0N08l09y_A" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>-->
