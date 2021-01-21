@@ -1,6 +1,4 @@
 {% for user in users %}
-{# {% include "chat/_top_bar_status_user.html" %} #}
-
     <div class="ui image label user-on-mobile">
         {{ user.nickname }}
         {% if leader == user.nickname %}

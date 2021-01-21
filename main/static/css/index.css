@@ -65,6 +65,12 @@
     padding: 2em 0em;
 }
 
+.footer-not-index {
+    position:fixed !important;
+    bottom:0;
+    width: 100%;
+}
+
 .secondary.menu .toc.item {
     display: none;
 }
@@ -104,6 +110,7 @@
     .ui.vertical.stripe h3 {
         font-size: 1.28em;
     }
+
 }
 
 .landing-image {

@@ -169,14 +169,5 @@
 {{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
 <script type="text/javascript">
     var csrf_token = "{{ csrf_token() }}";
-    var checkUserRoom_url = "{{ url_for('chat.checkUserRoom') }}";
-
-
-    // if ($(window).width() < 700) {
-    //     $('#sticky-element').removeClass('sticky');
-    //
-    //     } else {
-    //       $('#sticky-element').addClass('sticky');
-    //     }
 </script>
 {% endblock %}

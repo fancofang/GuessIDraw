@@ -139,8 +139,41 @@ function cleancanvas(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 };
 
+
+function Initcanvas() {
+    if (drawer.getVar == current_user_name) {
+        canvas.addEventListener('mousedown', start);
+        canvas.addEventListener('mouseup', end);
+        canvas.addEventListener('mousemove', docanvas);
+
+        canvas.addEventListener("touchstart", handleStart);
+        canvas.addEventListener("touchend", handleEnd);
+        canvas.addEventListener("touchmove", handleMove);
+
+        $('.canvas-container').on('click', ".pencil.alternate.icon", function () {
+            $(".pencil-menu").toggleClass('invisible');
+            $(".canvastool-pencil").addClass("active");
+            $(".canvastool-eraser").removeClass("active");
+            senddata.status = 'painting';
+        });
+
+        $('.canvas-container').on('click', ".eraser.icon", function () {
+            $(".eraser-menu").toggle();
+            $(".canvastool-pencil").removeClass("active");
+            $(".canvastool-eraser").addClass("active");
+            senddata.status = 'cleaning';
+        });
+
+    } else {
+        $(".canvastool-pencil").addClass('invisible');
+        $(".canvastool-eraser").addClass('invisible');
+        $(".canvastool-trash").addClass('invisible');
+    }
+};
+
+
 //active canvas tool
-$("#canvas-tool>div").click(function(){
+$('.canvas-container').on('click',"#canvas-tool>div",function(){
     $(this).addClass('active');
     $(this).siblings().removeClass('active');
     if($(".canvastool-pencil").hasClass("active")){
@@ -151,9 +184,20 @@ $("#canvas-tool>div").click(function(){
     }
     senddata.status = status
 });
+// $("#canvas-tool>div").click(function(){
+//     $(this).addClass('active');
+//     $(this).siblings().removeClass('active');
+//     if($(".canvastool-pencil").hasClass("active")){
+//         status = 'painting';
+//     };
+//     if($(".canvastool-eraser").hasClass("active")){
+//         status = 'cleaning';
+//     }
+//     senddata.status = status
+// });
 
 //active pencil color
-$("#color-group li").click(function(){
+$('.canvas-container').on('click',"#color-group li",function(){
     $(this).addClass('active');
     $(this).siblings().removeClass('active');
     pencilColor = this.style.backgroundColor;
@@ -161,19 +205,19 @@ $("#color-group li").click(function(){
 });
 
 //change pencil thickness
-$("#pencil-range").change(function(){
+$('.canvas-container').on('change',"#pencil-range",function(){
     pencilThickness = this.value;
     senddata.pencilThickness = pencilThickness
 });
 
 //change eraser thickness
-$("#eraser-range").change(function(){
+$('.canvas-container').on('change',"#eraser-range",function(){
     eraser= this.value;
     senddata.eraser = eraser;
 });
 
 //reset canvas
-$("#reSetCanvas").click(function(){
+$('.canvas-container').on('click',"#reSetCanvas",function(){
     cleancanvas();
 });
 
@@ -218,37 +262,7 @@ $(".canvastool-answer").click(function(){
 });
 
 
-
 $(document).ready(function () {
     //EventListen if you are drawer , you can draw, otherwise not.
-    if(drawer == current_user_name){
-        canvas.addEventListener('mousedown',start);
-        canvas.addEventListener('mouseup',end);
-        canvas.addEventListener('mousemove',docanvas);
-
-        canvas.addEventListener("touchstart", handleStart);
-        canvas.addEventListener("touchend", handleEnd);
-        canvas.addEventListener("touchmove", handleMove);
-
-        $(".pencil.alternate.icon").click(function(){
-            $(".pencil-menu").toggleClass('invisible');
-            $(".canvastool-pencil").addClass("active");
-            $(".canvastool-eraser").removeClass("active");
-            senddata.status = 'painting';
-        });
-
-        $(".eraser.icon").click(function(){
-            $(".eraser-menu").toggle();
-            $(".canvastool-pencil").removeClass("active");
-            $(".canvastool-eraser").addClass("active");
-            senddata.status = 'cleaning';
-        });
-    }
-    else{
-        $(".canvastool-pencil").addClass('invisible');
-        $(".canvastool-eraser").addClass('invisible');
-        $(".canvastool-trash").addClass('invisible');
-    }
-
-
+    Initcanvas();
 });

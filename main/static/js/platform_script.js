@@ -70,21 +70,6 @@ $(document).ready(function () {
         });
     }
 
-    function checkUserRoom() {
-        return $.ajax({
-            url: checkUserRoom_url,
-            success: function (data) {
-                if (data.result == 'success') {
-                    alert("You are alreay in room:" + data.data.room)
-                    return false
-                } else {
-                    console.log("true")
-                    return true
-                }
-            }
-        });
-    }
-
 
     // Join room from "Rooms in platform"
     $('#join-room-in-platform button').on('click', function () {

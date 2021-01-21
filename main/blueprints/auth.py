@@ -11,7 +11,7 @@ auth_bp = Blueprint('auth',__name__)
 def login():
     if current_user.is_authenticated:
         flash('You already log in.')
-        return redirect(url_for('chat.index'))
+        return redirect(url_for('index.index'))
     print("check login")
     form = LoginForm()
     if form.validate_on_submit():

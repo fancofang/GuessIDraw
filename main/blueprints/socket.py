@@ -7,7 +7,6 @@ from main.models import User, Message, Room
 
 @socketio.event
 def send_message(message):
-    print("server receive message",message)
     room = message['room']
     db_room = Room.query.filter_by(name=room).first()
     save_message = Message(body=message['data'], user=current_user,room=db_room)
@@ -37,10 +36,23 @@ def join(message):
              'user': current_user.nickname
          },
          room=message['room'])
+
+@socketio.event
+def beforeleaving(message):
+    change_leader = False
+    room = message['room']
+    db_room = Room.query.filter_by(name=room).first()
+    if db_room.leader == current_user.nickname:
+        change_leader = True
+    emit('my_response',
+         {
+             'type': 'beforeleave',
+             'changeLeader': change_leader
+         },
+         broadcast=False)
     
 @socketio.event
 def leave(message):
-    print(current_user.nickname + message.data + message.room)
     room = message['room']
     emit('my_response',
          {
@@ -83,7 +95,6 @@ def reset(message):
     room = message['room']
     r = Room.query.filter_by(name=room).first()
     reset_status = {user.nickname:0 for user in r.users}
-    print(reset_status)
     redis.hmset(room, reset_status)
     emit('my_response',
          {
@@ -95,11 +106,13 @@ def reset(message):
 
 @socketio.event
 def activeCountdown(message):
-    print("receive count down command")
+    room = message['room']
+    r = Room.query.filter_by(name=room).first()
     emit('my_response',
          {
              'type': 'countdown',
              'data': 'begin to count down',
+             'leader': r.leader
          },
          room=message['room'])
 
@@ -107,19 +120,20 @@ def activeCountdown(message):
 @socketio.event
 def stopDraw(message):
     room = message['room']
+    r = Room.query.filter_by(name=room).first()
     redis.hset("roomstatus", room, 0)
     emit('my_response',
          {
              'type': 'endRound',
              'data': message['data'],
-             'user': message['user']
+             'rightman': message['user'],
+             'leader': r.leader
          },
          room=message['room'])
 
 
 @socketio.event()
 def inform(message):
-    print(message['data'])
     emit('my_response',
          {
              'type': 'inform',
@@ -134,35 +148,21 @@ def mousemove(message):
     emit('draw',
          {
              'data': message['data'],
+             'type':  message['type']
          },
          room=message['room'],
          include_self=False)
 
 
-@socketio.on('answertime')
-def beginanswer(data):
-    room = session.get('room')
-    emit('answerprocess',data,room=room)
+@socketio.event
+def updatecanvas(message):
+    room = message['room']
+    emit('my_response',
+         {
+             'type': 'updatecanvas',
+             'canvas_html': render_template('chat/_canvas.html', user=message['leader'], leader=message['leader']),
+             'button_html': render_template('chat/_beginOrReady.html', user=message['leader'], leader=message['leader']),
+             'leader': message['leader']
+         },
+         room=room)
 
-
-
-@socketio.on('renew')
-def changeleader(data):
-    room = session.get('room')
-    if data['person'] == None:
-        pass
-    else:
-        emit('changeleader',
-            {
-                'message': "amazing",
-                'leader': data['person'],
-                'user_name': current_user.nickname
-            },
-            room=room)
-
-@socketio.on('updatescore')
-def updatescore(data):
-    room = session.get('room')
-    rank = redis.zrevrange(room, 0, -1, withscores=True)
-    rank = dict(rank)
-    emit('updatescore',rank,room=room)

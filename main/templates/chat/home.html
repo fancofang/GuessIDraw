@@ -47,66 +47,10 @@
         <!--drawing area-->
         <div id="canvas" class="row">
             <div class="column">
-                {% block canvas %}{% endblock %}
                 <div class="canvas-container">
-                    {% if leader == user.nickname %}
-                    <div id="canvas-tool">
-                        <div class="ui toggle icon button canvastool-pencil active" id="canvastool-pencil">
-                            <i class="pencil alternate icon"></i>
-                            <div class="pencil-menu invisible">
-                                <div class="range-wrap">
-                                    <input type="range" id="pencil-range" class="slider" min="1" max="30" value="5">
-                                </div>
-                                <div id="color-group">
-                                    <ul>
-                                        <li id="white" class="color-item" style="background-color: white;"></li>
-                                        <li id="black" class="color-item active" style="background-color: black;"></li>
-                                        <li id="red" class="color-item" style="background-color: #FF3333;"></li>
-                                        <li id="blue" class="color-item" style="background-color: #0066FF;"></li>
-                                        <li id="yellow" class="color-item" style="background-color: #FFFF33;"></li>
-                                        <li id="green" class="color-item" style="background-color: #33CC66;"></li>
-                                        <li id="gray" class="color-item" style="background-color: gray;"></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ui toggle icon button canvastool-eraser" id="canvastool-eraser">
-                            <i class="eraser icon"></i>
-                            <div class="eraser-menu invisible">
-                                <div class="range-wrap">
-                                    <input type="range" id="eraser-range" class="slider" min="1" max="60" value="30">
-                                </div>
-                            </div>
-                        </div>
+                    <div id="refreshcanvas">
+                        {% include 'chat/_canvas.html' %}
                     </div>
-                    <div id="question" class="ui card">
-                        <div class="content">
-                            <div class="header">Topic
-                                                <!--                    <button class="ui icon mini button circular refresh">-->
-                                                <!--                      <i class="redo icon"></i>-->
-                                                <!--                    </button>-->
-                            </div>
-                            <div class="description"></div>
-                        </div>
-                    </div>
-                    <div id="reSetCanvas" class="ui icon button canvastool-trash">
-                        <i class="trash alternate icon"></i>
-                    </div>
-                    {% else %}
-                    <div class="ui icon button toggle canvastool-answer active">
-                        <i class="keyboard icon"></i>
-                    </div>
-                    <div id="answer" class="ui card">
-                        <div class="content">
-                            <div class="header">Answer:</div>
-                            <div class="description"><i id="checkanswer" class="icon"></i></div>
-
-                        </div>
-<!--                        <div class="ui input">-->
-<!--                            <input id="answer-textarea" type="text" placeholder="your answer...">-->
-<!--                        </div>-->
-                    </div>
-                    {% endif %}
                     <div class="ui icon button toggle canvastool-rank active">
                         <i class="trophy icon"></i>
                     </div>
@@ -142,17 +86,8 @@
                               placeholder="Write your message here... Enter to send"></textarea>
                 </div>
             </div>
-            <div class="four wide column">
-                {% if leader == user.nickname %}
-                <div id="leaderprepare" class="ui buttons large">
-                    <button id="begin" class="ui button orange disabled inputarea-button">Begin</button>
-                </div>
-                {% else %}
-                <div id="guestprepare" class="ui buttons large">
-                    <button id="ready" class="ui toggle button inputarea-button">Ready</button>
-
-                </div>
-                {% endif %}
+            <div class="four wide column" id="beginOrReady-button">
+                {% include "chat/_beginOrReady.html" %}
             </div>
             {% else %}
             <div class="ui floating message">Please <a href="{{ url_for('auth.login') }}">Sign in</a> or
@@ -223,9 +158,6 @@
 <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
 <script src="{{ url_for('static', filename='js/canvas.js') }}"></script>
 <script src="{{ url_for('static', filename='js/additional_socket.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.knob.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.throttle.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.classycountdown.js') }}"></script>
 <script src="{{ url_for('static', filename='js/drawing_script.js') }}"></script>
 {{ moment.include_moment(local_js=url_for('static', filename='js/moment-with-locales.min.js')) }}
 <script type="text/javascript">
@@ -233,16 +165,23 @@
     var refresh_score_url = "{{  url_for('chat.roomscore', rn=room_name) }}";
     var refresh_leader_url = "{{  url_for('chat.refreshleader', rn=room_name) }}";
     var refresh_ready_url = "{{  url_for('chat.refreshreadystatus', rn=room_name) }}";
-    var current_user_id = "{{ current_user.id|default(0) }}";
+    var change_leader_url = "{{  url_for('chat.leader_change', rn=room_name) }}";
     var current_user_name = "{{ current_user.nickname|default(0) }}";
-    var current_room = "{{ room_name }}";
     var check_answer_url = "{{ url_for('chat.check_answer', rn=room_name) }}";
     var get_topic = "{{ url_for('chat.get_topic', rn=room_name) }}";
-    var clean_topic_url = "{{ url_for('chat.clean_topic') }}";
-    var drawer = "{{ leader|safe }}";
 
     $(document).ready(function () {
     });
+    var drawer = {
+      value: "{{ leader|safe }}",
+      get getVar() {
+        return this.value;
+      },
+      set saveVar(value) {
+        this.value = value;
+        Initcanvas();
+      }
+    }
 
 
 </script>
