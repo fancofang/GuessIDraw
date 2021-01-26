@@ -62,7 +62,8 @@ def leave(message):
              'data': 'has left the room',
              'user': current_user.nickname
          },
-         room=room)
+         room=room,
+         include_self=False)
     leave_room(room)
     
 @socketio.event

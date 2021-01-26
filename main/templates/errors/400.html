@@ -1,0 +1,13 @@
+{% extends 'errors/error_base.html' %}
+
+{% block title %}400 Error{% endblock %}
+
+{% block content %}
+<h2 class="ui blue image header">
+    <div class="content">
+        400 Error
+    </div>
+</h2>
+<p>{{ description|default('Bad Request') }}</p>
+<a href="{{ url_for('index.index') }}">Return Home</a>
+{% endblock %}

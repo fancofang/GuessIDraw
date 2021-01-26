@@ -1,0 +1,14 @@
+{% extends 'errors/error_base.html' %}
+
+{% block title %}413 Error{% endblock %}
+
+{% block content %}
+<h2 class="ui blue image header">
+    <div class="content">
+        413 Error
+    </div>
+</h2>
+<p>Request Entity Too Large</p>
+<a href="{{ url_for('index.index') }}">Return Home</a>
+{% endblock %}
+

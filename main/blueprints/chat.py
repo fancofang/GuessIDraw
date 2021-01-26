@@ -127,6 +127,8 @@ def leader_change(rn,user):
     if user and user in members:
         candidate = user
         # leader = room.set_leader(user)
+    elif len(members) == 1 and members[0] == room.leader:
+        return jsonify(result="success", type="changeLeader", data={"room": room.name, "leader": room.leader})
     else:
         candidate = random.choice([i for i in members if i !=room.leader])
     leader = room.set_leader(candidate)

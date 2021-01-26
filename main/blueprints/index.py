@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, redirect, url_for
+from flask import Blueprint, render_template, jsonify, redirect, url_for, app
 
 index_bp = Blueprint('index',__name__)
 
@@ -10,8 +10,6 @@ def index():
 def howToPlay():
     return render_template('howToPlay.html')
 
-# @index_bp.route('/test')
-# def test_page():
-#     # room = Room.query.filter_by(name='1234').first()
-#     # return jsonify(result="success", type='test')
-#     return redirect(url_for('chat.checkUserRoom'))
+@index_bp.route('/test')
+def test_page():
+    return str(1/0)

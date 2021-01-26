@@ -1,0 +1,13 @@
+{% extends 'errors/error_base.html' %}
+
+{% block title %}500 Error{% endblock %}
+
+{% block content %}
+<h2 class="ui blue image header">
+    <div class="content">
+        We are fixing the issue.
+    </div>
+</h2>
+<p>Try later.</p>
+<a href="{{ url_for('index.index') }}">Return Home</a>
+{% endblock %}

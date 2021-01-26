@@ -1,6 +1,7 @@
 import os
 import click
-from flask import Flask
+
+from flask import Flask, render_template
 from main.extensions import db, socketio, login_manager, csrf, moment, redis, migrate
 from main.configs import config
 from main.blueprints.index import index_bp
@@ -18,6 +19,8 @@ def create_app(config_name=None):
     register_extensions(app)
     register_blueprints(app)
     register_commands(app)
+    register_logging(app)
+    register_errors(app)
     import main.blueprints.socket
 
     return app
@@ -162,6 +165,45 @@ def register_commands(app):
                 db.session.add(new_instance)
                 print(word)
         db.session.commit()
-        
-        
-        
+
+def register_errors(app):
+    from flask_wtf.csrf import CSRFError
+    
+    @app.errorhandler(400)
+    def bad_request(e):
+        return render_template('errors/400.html'), 400
+
+    @app.errorhandler(403)
+    def page_forbidden(e):
+        return render_template('errors/403.html'), 403
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(413)
+    def request_too_large(e):
+        return render_template('errors/413.html'), 413
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        return render_template('errors/400.html', description="login timeout"), 400
+
+def register_logging(app):
+    import logging
+    from logging.handlers import RotatingFileHandler
+    # File recode warning error
+    basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    file_handler = RotatingFileHandler(os.path.join(basedir, 'logs', 'error.log'),
+                                       maxBytes=10 * 1024 * 1024, backupCount=10)
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.ERROR)
+    
+    if not app.debug:
+        app.logger.addHandler(file_handler)
