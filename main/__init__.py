@@ -28,7 +28,7 @@ def create_app(config_name=None):
 def register_extensions(app):
     db.init_app(app)
     migrate.init_app(app,db)
-    socketio.init_app(app)
+    socketio.init_app(app, async_mode="eventlet")
     login_manager.init_app(app)
     csrf.init_app(app)
     moment.init_app(app)
